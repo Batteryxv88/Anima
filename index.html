@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#4E7A68" />
+    <meta name="description" content="Anima — companion between therapy sessions" />
+    <title>Anima</title>
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('anima-user')
+          var state = raw ? JSON.parse(raw).state : {}
+          var theme = state.theme || 'system'
+          var dark =
+            theme === 'dark' ||
+            (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', dark)
+          document.documentElement.lang = state.language || 'ru'
+          if (state.largeText) document.documentElement.dataset.text = 'large'
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
