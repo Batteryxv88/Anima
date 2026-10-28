@@ -1,13 +1,16 @@
 export {
   APP_NAME,
+  FOUNDER_EMAIL,
   careModes,
   countries,
   localeTags,
   locales,
   navItems,
+  staffRoles,
   themes,
   type CareMode,
   type Country,
   type Locale,
+  type StaffRole,
   type Theme,
 } from './constants'

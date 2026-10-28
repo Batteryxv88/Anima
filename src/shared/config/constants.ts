@@ -1,4 +1,8 @@
 export const APP_NAME = 'Anima'
+export const FOUNDER_EMAIL = 'waterviewme@gmail.com'
+
+export const staffRoles = ['user', 'admin', 'superadmin'] as const
+export type StaffRole = (typeof staffRoles)[number]
 
 export const locales = ['ru', 'en', 'sl'] as const
 export type Locale = (typeof locales)[number]

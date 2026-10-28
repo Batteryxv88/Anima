@@ -5,6 +5,7 @@ import { useUserStore } from '@/entities/user'
 import { LanguageSwitch } from '@/features/switch-language'
 import { ThemeSwitch } from '@/features/toggle-theme'
 import { APP_NAME, careModes, countries, type CareMode, type Country } from '@/shared/config'
+import { takeNext } from '@/shared/lib'
 import { Button, Card, ChoiceButton, ChoiceGroup } from '@/shared/ui'
 
 export function OnboardingPage() {
@@ -88,7 +89,7 @@ export function OnboardingPage() {
               return
             }
             completeOnboarding()
-            navigate('/today', { replace: true })
+            navigate(takeNext('/today'), { replace: true })
           }}
         >
           {last ? t('onboarding.start') : t('onboarding.next')}

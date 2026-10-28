@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function isFounder() {
+      return signedIn() && request.auth.token.email == 'waterviewme@gmail.com';
+    }
+    function roleOf(uid) {
+      return get(/databases/$(database)/documents/roles/$(uid)).data.role;
+    }
+    function isSuperAdmin() {
+      return isFounder() || (
+        signedIn()
+        && exists(/databases/$(database)/documents/roles/$(request.auth.uid))
+        && roleOf(request.auth.uid) == 'superadmin'
+      );
+    }
+    function isAdmin() {
+      return isSuperAdmin() || (
+        signedIn()
+        && exists(/databases/$(database)/documents/roles/$(request.auth.uid))
+        && roleOf(request.auth.uid) == 'admin'
+      );
+    }
+    function isPatient(data) {
+      return signedIn() && request.auth.uid == data.patientUid;
+    }
+    function isTherapist(data) {
+      return signedIn() && request.auth.uid == data.therapistUid;
+    }
+    function isLinkMember(data) {
+      return isPatient(data) || isTherapist(data)
+        || (data.members is list && request.auth.uid in data.members);
+    }
+
+    match /users/{uid} {
+      allow get: if isOwner(uid) || isSuperAdmin();
+      allow list: if isSuperAdmin();
+      allow write: if isOwner(uid);
+    }
+
+    match /roles/{uid} {
+      allow get: if isOwner(uid) || isSuperAdmin();
+      allow list: if isSuperAdmin();
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    match /techniques/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /userCare/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /invites/{token} {
+      allow create: if isPatient(request.resource.data)
+        && request.resource.data.status == 'open'
+        && request.resource.data.therapistUid == null;
+      allow read: if signedIn();
+      allow update: if signedIn() && (
+        (
+          resource.data.status == 'open'
+          && resource.data.therapistUid == null
+          && resource.data.patientUid != request.auth.uid
+          && resource.data.expiresAtMs > request.time.toMillis()
+          && request.resource.data.therapistUid == request.auth.uid
+          && request.resource.data.status == 'claimed'
+          && request.resource.data.patientUid == resource.data.patientUid
+        )
+        || isPatient(resource.data)
+      );
+      allow delete: if isPatient(resource.data);
+    }
+
+    match /links/{linkId} {
+      allow create: if isPatient(request.resource.data)
+        && request.resource.data.revoked == false
+        && request.resource.data.therapistUid is string
+        && request.resource.data.therapistUid.size() > 0;
+      allow read: if isLinkMember(resource.data);
+      allow update: if isPatient(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['scope', 'revoked', 'members']);
+      allow delete: if isPatient(resource.data);
+    }
+
+    match /shares/{linkId} {
+      allow create, update: if isPatient(request.resource.data);
+      allow read: if isPatient(resource.data) || isTherapist(resource.data);
+    }
+
+    match /shareNotes/{linkId} {
+      allow create: if isPatient(request.resource.data) || isTherapist(request.resource.data);
+      allow read, update: if isPatient(resource.data) || isTherapist(resource.data);
+    }
+  }
+}

@@ -1,1 +1,43 @@
-export { useCareStore, type Assignment, type CheckIn, type CrisisPlan, type Practice } from './model'
+export { pullCare, pushCare } from './api'
+export {
+  useCareStore,
+  type Assignment,
+  type CareSnapshot,
+  type CheckIn,
+  type CrisisPlan,
+  type JournalEntry,
+  type JournalKind,
+  type Practice,
+} from './model'
+export {
+  addPendingAssignment,
+  addTherapistComment,
+  claimInvite,
+  consumeTherapistNotes,
+  confirmInvite,
+  createInvite,
+  inviteUrl,
+  listenInvite,
+  listenLinks,
+  listenNotes,
+  listenPatientNotes,
+  listenShare,
+  pushShareSnapshots,
+  readInvite,
+  readLink,
+  rememberTherapistLink,
+  refreshLinks,
+  revokeLink,
+  syncPatientShares,
+  updateLinkScope,
+} from './share-api'
+export {
+  defaultScope,
+  useShareStore,
+  type CareLink,
+  type Invite,
+  type ShareNotes,
+  type ShareScope,
+  type ShareSnapshot,
+  type TherapistComment,
+} from './share'

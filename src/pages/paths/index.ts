@@ -1,0 +1,1 @@
+export { PathsPage } from './ui'

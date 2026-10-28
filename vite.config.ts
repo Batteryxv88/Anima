@@ -6,7 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   server: {
-    host: '127.0.0.1',
+    host: true,
     port: 5173,
   },
   plugins: [
@@ -14,7 +14,12 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false,
       includeAssets: ['favicon.svg'],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,woff2,json}'],
+        navigateFallback: '/index.html',
+      },
       manifest: {
         name: 'Anima',
         short_name: 'Anima',

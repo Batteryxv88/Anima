@@ -29,6 +29,15 @@ export function formatDay(isoDate: string, locale: string) {
   }).format(new Date(`${isoDate}T12:00:00`))
 }
 
+export function formatStamp(iso: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(iso))
+}
+
 export function weekRangeLabel(locale: string, date = new Date()) {
   const start = startOfWeek(date)
   const end = new Date(start)
