@@ -63,7 +63,9 @@ export function AppShell() {
       <NoticeLayer notice={returned.notice} onClose={returned.hide} />
       <NoticeLayer notice={nameNotice.notice} onClose={nameNotice.hide} />
       <aside className="fixed inset-y-0 left-0 hidden w-56 border-r border-line bg-card/80 p-4 md:flex md:flex-col">
-        <p className="px-2 pb-6 text-lg font-medium tracking-tight">{APP_NAME}</p>
+        <Link to="/today" className="block px-2 pb-6 text-lg font-medium tracking-tight text-ink">
+          {APP_NAME}
+        </Link>
         {isSpecialist ? (
           <p className="mb-4 px-2 text-xs leading-relaxed text-sage-deep">{t('invite.asSpecialist')}</p>
         ) : null}
@@ -104,10 +106,12 @@ export function AppShell() {
                 {t('nav.back')}
               </Link>
             ) : (
-              <span className="truncate text-base font-medium md:hidden">{APP_NAME}</span>
+              <Link to="/today" className="truncate text-base font-medium text-ink md:hidden">
+                {APP_NAME}
+              </Link>
             )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex min-w-0 items-center gap-1">
             {isSpecialist ? (
               <Link
                 to="/cabinet"
@@ -127,10 +131,17 @@ export function AppShell() {
             </Link>
             <Link
               to="/profile"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-muted hover:bg-card hover:text-ink"
-              aria-label={t('nav.profile')}
+              className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-2 text-muted hover:bg-card hover:text-ink"
+              aria-label={
+                displayName.trim() ? `${displayName.trim()}, ${t('nav.profile')}` : t('nav.profile')
+              }
             >
-              <CircleUserRound size={22} strokeWidth={1.75} />
+              {displayName.trim() ? (
+                <span className="max-w-[5.5rem] truncate text-sm text-ink sm:max-w-[10rem] md:max-w-[14rem]">
+                  {displayName.trim()}
+                </span>
+              ) : null}
+              <CircleUserRound size={22} strokeWidth={1.75} className="shrink-0" />
             </Link>
           </div>
         </header>
