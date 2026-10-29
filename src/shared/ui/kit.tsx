@@ -15,7 +15,7 @@ export function PageHeader({
   action?: ReactNode
 }) {
   return (
-    <header className="mb-5 flex items-start justify-between gap-3">
+    <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
       <div>
         <h1 className="text-[1.65rem] font-medium leading-tight tracking-tight text-ink">{title}</h1>
         {text ? <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">{text}</p> : null}
@@ -33,7 +33,7 @@ export function Card({
   className?: string
 }) {
   return (
-    <section className={cn('rounded-2xl border border-line bg-card p-5', className)}>
+    <section className={cn('min-w-0 rounded-2xl border border-line bg-card p-4 sm:p-5', className)}>
       {children}
     </section>
   )
@@ -110,7 +110,7 @@ export function Field({
 export function TextField(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className="w-full rounded-xl border border-line bg-canvas px-3 py-2.5 text-sm text-ink outline-none focus:border-sage"
+      className="w-full min-w-0 max-w-full rounded-xl border border-line bg-canvas px-3 py-2.5 text-sm text-ink outline-none focus:border-sage"
       {...props}
     />
   )
@@ -122,7 +122,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
       <textarea
         ref={ref}
         rows={4}
-        className="w-full resize-y rounded-xl border border-line bg-canvas px-3 py-2.5 text-sm leading-relaxed text-ink outline-none focus:border-sage"
+        className="w-full min-w-0 max-w-full resize-y rounded-xl border border-line bg-canvas px-3 py-2.5 text-sm leading-relaxed text-ink outline-none focus:border-sage"
         {...props}
       />
     )
@@ -362,7 +362,7 @@ export function SearchSelect({
                   role="option"
                   aria-selected={item.id === value}
                   className={cn(
-                    'flex min-h-11 w-full flex-col items-start justify-center px-3 py-2 text-left text-sm',
+                    'flex min-h-11 w-full min-w-0 flex-col items-start justify-center px-3 py-2 text-left text-sm',
                     item.id === value ? 'bg-sage/10 text-sage-deep' : 'text-ink hover:bg-canvas',
                   )}
                   onMouseDown={(event) => event.preventDefault()}
@@ -372,8 +372,8 @@ export function SearchSelect({
                     setOpen(false)
                   }}
                 >
-                  <span>{item.label}</span>
-                  {item.hint ? <span className="text-xs text-muted">{item.hint}</span> : null}
+                  <span className="break-words">{item.label}</span>
+                  {item.hint ? <span className="break-words text-xs text-muted">{item.hint}</span> : null}
                 </button>
               </li>
             ))

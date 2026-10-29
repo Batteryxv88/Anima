@@ -59,7 +59,7 @@ function CloudSync({ children }: { children: ReactNode }) {
       timer = window.setTimeout(() => {
         void pushProfile(uid)
         void pushCare(uid)
-        void pushShareSnapshots(uid)
+        void pushShareSnapshots(uid, useUserStore.getState().displayName.trim())
         if (useShareStore.getState().patientLinks.length > 0) {
           void consumeTherapistNotes(uid)
         }

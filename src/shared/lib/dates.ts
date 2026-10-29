@@ -38,6 +38,15 @@ export function formatStamp(iso: string, locale: string) {
   }).format(new Date(iso))
 }
 
+export function weekDates(date = new Date()) {
+  const start = startOfWeek(date)
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(start)
+    day.setDate(start.getDate() + index)
+    return todayId(day)
+  })
+}
+
 export function weekRangeLabel(locale: string, date = new Date()) {
   const start = startOfWeek(date)
   const end = new Date(start)

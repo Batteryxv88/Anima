@@ -183,7 +183,7 @@ export function SharePanel() {
                 .then(() => {
                   setInvite(null)
                   show(t('invite.confirmedNotice'))
-                  return syncPatientShares(uid)
+                  return syncPatientShares(uid, useUserStore.getState().displayName.trim())
                 })
                 .catch(() => setError(t('invite.failed')))
             }}
@@ -226,7 +226,7 @@ function ShareLinkCard({
           setScope(next)
           setError('')
           void updateLinkScope(link.id, next)
-            .then(() => syncPatientShares(uid))
+            .then(() => syncPatientShares(uid, useUserStore.getState().displayName.trim()))
             .catch(() => setError(t('invite.failed')))
         }}
       />
@@ -235,7 +235,7 @@ function ShareLinkCard({
         onClick={() => {
           void revokeLink(link.id).then(() => {
             onNotice(t('invite.revokedNotice'))
-            return syncPatientShares(uid)
+            return syncPatientShares(uid, useUserStore.getState().displayName.trim())
           })
         }}
       >

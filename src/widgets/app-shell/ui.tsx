@@ -10,9 +10,11 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useShareStore } from '@/entities/care'
+import { useUserStore } from '@/entities/user'
 import { APP_NAME, navItems } from '@/shared/config'
 import { cn, practiceFrom } from '@/shared/lib'
-import { NoticeLayer, useReturnNotice } from '@/shared/ui'
+import { NoticeLayer, useNotice, useReturnNotice } from '@/shared/ui'
+import { NameStep } from './name-step'
 
 const icons = {
   today: Home,
@@ -26,6 +28,11 @@ export function AppShell() {
   const { t } = useTranslation()
   const location = useLocation()
   const returned = useReturnNotice(t('common.savedNotice'), t('skill.saved'))
+  const nameNotice = useNotice()
+  const uid = useUserStore((state) => state.uid)
+  const authReady = useUserStore((state) => state.authReady)
+  const displayName = useUserStore((state) => state.displayName)
+  const needName = authReady && Boolean(uid) && !displayName.trim() && location.pathname !== '/crisis'
   const isSpecialist = useShareStore((state) => state.therapistLinks.length > 0)
   const items = isSpecialist
     ? [{ to: '/cabinet', key: 'nav.cabinet', icon: 'cabinet' as const }, ...navItems]
@@ -54,6 +61,7 @@ export function AppShell() {
   return (
     <div className="min-h-dvh bg-canvas text-ink">
       <NoticeLayer notice={returned.notice} onClose={returned.hide} />
+      <NoticeLayer notice={nameNotice.notice} onClose={nameNotice.hide} />
       <aside className="fixed inset-y-0 left-0 hidden w-56 border-r border-line bg-card/80 p-4 md:flex md:flex-col">
         <p className="px-2 pb-6 text-lg font-medium tracking-tight">{APP_NAME}</p>
         {isSpecialist ? (
@@ -127,8 +135,12 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-xl px-4 py-6 pb-24 md:max-w-3xl md:pb-10 lg:max-w-4xl">
-          <Outlet />
+        <main className="mx-auto w-full min-w-0 max-w-xl px-4 py-6 pb-24 md:max-w-3xl md:pb-10 lg:max-w-4xl">
+          {needName ? (
+            <NameStep onSaved={() => nameNotice.show(t('common.savedNotice'), t('name.saved'))} />
+          ) : (
+            <Outlet />
+          )}
         </main>
       </div>
 
@@ -146,13 +158,13 @@ export function AppShell() {
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  'flex min-h-12 flex-col items-center justify-center gap-0.5 text-[11px]',
+                  'flex min-h-12 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 text-center text-[10px] leading-tight sm:text-[11px]',
                   isActive ? 'text-sage-deep' : 'text-muted',
                 )
               }
             >
-              <Icon size={20} strokeWidth={1.75} />
-              {t(item.key)}
+              <Icon size={20} strokeWidth={1.75} className="shrink-0" />
+              <span className="w-full">{t(item.key)}</span>
             </NavLink>
           )
         })}

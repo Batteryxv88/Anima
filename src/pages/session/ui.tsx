@@ -1,31 +1,33 @@
 import { useTranslation } from 'react-i18next'
 import { useCareStore, useShareStore } from '@/entities/care'
-import { AnswerList, getTechnique, techniqueCopy, useTechniqueStore } from '@/entities/technique'
 import { localeTags, type Locale } from '@/shared/config'
-import { formatStamp, isThisWeek, scaleWordKey, weekRangeLabel } from '@/shared/lib'
-import { Button, Card, Field, PageHeader, TextArea } from '@/shared/ui'
+import { formatStamp, isThisWeek, weekRangeLabel } from '@/shared/lib'
+import { Button, Card, PageHeader, TextArea } from '@/shared/ui'
+import { WeekMarks } from '@/widgets/week-marks'
+import { WeekWork } from '@/widgets/week-work'
 
 export function SessionPage() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language as Locale
-  useTechniqueStore((state) => state.list)
   const sessionNote = useCareStore((state) => state.sessionNote)
   const setSessionNote = useCareStore((state) => state.setSessionNote)
   const checkIns = useCareStore((state) => state.checkIns)
   const practices = useCareStore((state) => state.practices)
+  const assignments = useCareStore((state) => state.assignments)
   const journal = useCareStore((state) => state.journal)
   const comments = useShareStore((state) => state.comments)
   const weekCheckIns = checkIns.filter((item) => isThisWeek(item.date))
   const weekPractices = practices.filter((item) => isThisWeek(item.at.slice(0, 10)))
+  const weekAssignments = assignments.filter((item) => isThisWeek(item.createdAt.slice(0, 10)))
   const weekShared = journal.filter(
     (item) => item.shareWithSpecialist && isThisWeek(item.at.slice(0, 10)),
   )
-
-  const avgWord = (key: 'mood' | 'anxiety' | 'sleep') => {
-    if (weekCheckIns.length === 0) return '—'
-    const mean = weekCheckIns.reduce((sum, item) => sum + item[key], 0) / weekCheckIns.length
-    return t(scaleWordKey(key, mean))
-  }
+  const weekEmpty =
+    weekCheckIns.length === 0 &&
+    weekPractices.length === 0 &&
+    weekAssignments.length === 0 &&
+    weekShared.length === 0 &&
+    comments.length === 0
 
   return (
     <>
@@ -42,85 +44,62 @@ export function SessionPage() {
           {t('session.range')}: {weekRangeLabel(localeTags[locale])}
         </p>
         <Card>
-          <h2 className="text-base font-medium">{t('session.trend')}</h2>
-          {weekCheckIns.length === 0 ? (
-            <p className="mt-2 text-sm text-muted">{t('session.none')}</p>
-          ) : (
-            <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-              <div>
-                <dt className="text-xs text-muted">{t('today.mood')}</dt>
-                <dd className="text-base font-medium">{avgWord('mood')}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted">{t('today.anxiety')}</dt>
-                <dd className="text-base font-medium">{avgWord('anxiety')}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted">{t('today.sleep')}</dt>
-                <dd className="text-base font-medium">{avgWord('sleep')}</dd>
-              </div>
-            </dl>
-          )}
+          <h2 className="text-xs tracking-wide text-sand">{t('session.want')}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{t('session.wantHint')}</p>
+          <div className="mt-3">
+            <TextArea value={sessionNote} onChange={(event) => setSessionNote(event.target.value)} />
+          </div>
         </Card>
-        <Card>
-          <h2 className="text-base font-medium">{t('session.practiced')}</h2>
-          {weekPractices.length === 0 ? (
-            <p className="mt-2 text-sm text-muted">{t('session.emptyPractice')}</p>
-          ) : (
-            <ul className="mt-3 grid gap-2">
-              {weekPractices.map((item) => {
-                const technique = getTechnique(item.techniqueId)
-                const title = technique ? techniqueCopy(technique, locale).title : item.techniqueId
-                return (
-                  <li key={item.id} className="text-sm leading-relaxed">
-                    <p>
-                      <span className="font-medium">{title}</span>
-                      {item.note ? <span className="text-muted"> — {item.note}</span> : null}
-                    </p>
-                    {technique ? <AnswerList technique={technique} answers={item.answers} /> : null}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </Card>
-        <Card>
-          <h2 className="text-base font-medium">{t('journal.thisWeek')}</h2>
-          {weekShared.length === 0 ? (
-            <p className="mt-2 text-sm text-muted">{t('journal.noneShared')}</p>
-          ) : (
-            <ul className="mt-3 grid gap-3">
+        {weekCheckIns.length > 0 ? (
+          <Card>
+            <h2 className="text-xs tracking-wide text-sand">{t('session.week')}</h2>
+            <WeekMarks checkIns={weekCheckIns} />
+          </Card>
+        ) : null}
+        {weekPractices.length > 0 || weekAssignments.length > 0 ? (
+          <Card>
+            <h2 className="text-xs tracking-wide text-sand">{t('session.practiced')}</h2>
+            <WeekWork assignments={weekAssignments} practices={weekPractices} />
+          </Card>
+        ) : null}
+        {weekShared.length > 0 ? (
+          <Card>
+            <h2 className="text-xs tracking-wide text-sand">{t('session.journal')}</h2>
+            <ul className="mt-4 grid gap-5">
               {weekShared.map((item) => (
-                <li key={item.id} className="text-sm leading-relaxed">
-                  <p className="text-xs text-muted">{formatStamp(item.at, localeTags[locale])}</p>
-                  <p className="mt-1">
+                <li key={item.id}>
+                  <p className="text-xs tracking-wide text-sand">
+                    {item.kind === 'thought' ? t('journal.kindThought') : t('journal.kindNote')}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">{formatStamp(item.at, localeTags[locale])}</p>
+                  <p className="mt-2 text-sm leading-relaxed">
                     {item.kind === 'thought' ? item.thought || item.situation : item.body}
                   </p>
                   {item.kind === 'thought' && item.otherLook ? (
-                    <p className="mt-1 text-muted">{item.otherLook}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-muted">
+                      <span className="text-xs tracking-wide text-sand">{t('journal.otherLook')}</span>
+                      <span className="mt-1 block">{item.otherLook}</span>
+                    </p>
                   ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-        {comments.length > 0 ? (
-          <Card>
-            <h2 className="text-base font-medium">{t('cabinet.comments')}</h2>
-            <ul className="mt-3 grid gap-2">
-              {comments.map((item) => (
-                <li key={item.id} className="text-sm leading-relaxed">
-                  <span className="text-xs text-muted">{formatStamp(item.at, localeTags[locale])}</span>
-                  <p>{item.text}</p>
                 </li>
               ))}
             </ul>
           </Card>
         ) : null}
-        <Field label={t('session.want')}>
-          <p className="mb-2 text-sm text-muted">{t('session.wantHint')}</p>
-          <TextArea value={sessionNote} onChange={(event) => setSessionNote(event.target.value)} />
-        </Field>
+        {comments.length > 0 ? (
+          <Card>
+            <h2 className="text-xs tracking-wide text-sand">{t('session.fromSpecialist')}</h2>
+            <ul className="mt-4 grid gap-4">
+              {comments.map((item) => (
+                <li key={item.id}>
+                  <p className="text-xs text-muted">{formatStamp(item.at, localeTags[locale])}</p>
+                  <p className="mt-1 text-sm leading-relaxed">{item.text}</p>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ) : null}
+        {weekEmpty ? <p className="text-sm leading-relaxed text-muted">{t('session.empty')}</p> : null}
       </div>
     </>
   )

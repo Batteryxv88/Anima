@@ -11,10 +11,12 @@ import {
   type ShareNotes,
   type ShareSnapshot,
 } from '@/entities/care'
-import { AnswerList, getTechnique, techniqueCopy, useTechniqueStore } from '@/entities/technique'
+import { techniqueCopy, useTechniqueStore } from '@/entities/technique'
 import { localeTags, type Locale } from '@/shared/config'
-import { formatStamp, isThisWeek, scaleWordKey } from '@/shared/lib'
+import { formatStamp, isThisWeek } from '@/shared/lib'
 import { Button, Card, EmptyState, Field, NoticeLayer, PageHeader, SearchSelect, TextArea, TextField, useNotice } from '@/shared/ui'
+import { WeekMarks } from '@/widgets/week-marks'
+import { WeekWork } from '@/widgets/week-work'
 
 function Notebook({ link }: { link: CareLink }) {
   const { t, i18n } = useTranslation()
@@ -50,63 +52,39 @@ function Notebook({ link }: { link: CareLink }) {
     }
   }, [link.id])
 
-  const avgWord = (key: 'mood' | 'anxiety' | 'sleep') => {
-    if (weekCheckIns.length === 0) return '—'
-    const mean = weekCheckIns.reduce((sum, item) => sum + item[key], 0) / weekCheckIns.length
-    return t(scaleWordKey(key, mean))
-  }
-
   return (
     <div className="grid gap-4">
       <NoticeLayer notice={notice} onClose={hide} />
-      <p className="text-sm text-muted">{link.patientEmail || t('cabinet.patient')}</p>
+      <div>
+        <p className="break-words text-base font-medium">
+          {share?.patientName?.trim() || link.patientEmail || t('cabinet.patient')}
+        </p>
+        {share?.patientName?.trim() && link.patientEmail ? (
+          <p className="mt-1 break-all text-sm text-muted">{link.patientEmail}</p>
+        ) : null}
+      </div>
       {link.scope.trend ? (
         <Card>
-          <h2 className="text-base font-medium">{t('session.trend')}</h2>
-          <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-            <div>
-              <dt className="text-xs text-muted">{t('today.mood')}</dt>
-              <dd className="text-base font-medium">{avgWord('mood')}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-muted">{t('today.anxiety')}</dt>
-              <dd className="text-base font-medium">{avgWord('anxiety')}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-muted">{t('today.sleep')}</dt>
-              <dd className="text-base font-medium">{avgWord('sleep')}</dd>
-            </div>
-          </dl>
+          <h2 className="text-base font-medium">{t('session.week')}</h2>
+          {share && weekCheckIns.length === 0 ? (
+            <p className="mt-2 text-sm text-muted">{t('session.none')}</p>
+          ) : (
+            <WeekMarks checkIns={weekCheckIns} />
+          )}
         </Card>
       ) : null}
       {link.scope.assignments ? (
         <Card>
           <h2 className="text-base font-medium">{t('homework.title')}</h2>
-          <ul className="mt-3 grid gap-2">
-            {(share?.assignments ?? []).map((item) => {
-              const technique = getTechnique(item.techniqueId)
-              const title = technique ? techniqueCopy(technique, locale).title : item.techniqueId
-              return (
-                <li key={item.id} className="text-sm">
-                  <p>
-                    {title}
-                    {item.patientNote ? <span className="text-muted"> — {item.patientNote}</span> : null}
-                  </p>
-                  {technique ? <AnswerList technique={technique} answers={item.answers} /> : null}
-                </li>
-              )
-            })}
-            {(notes?.pendingAssignments ?? []).map((item) => {
-              const technique = getTechnique(item.techniqueId)
-              const title = technique ? techniqueCopy(technique, locale).title : item.techniqueId
-              return (
-                <li key={item.id} className="text-sm">
-                  {title}
-                  <span className="text-muted"> — {t('cabinet.queued')}</span>
-                </li>
-              )
-            })}
-          </ul>
+          <WeekWork
+            assignments={[
+              ...(share?.assignments ?? []),
+              ...(notes?.pendingAssignments ?? []).filter(
+                (item) => !(share?.assignments ?? []).some((assigned) => assigned.techniqueId === item.techniqueId),
+              ),
+            ]}
+            practices={share?.practices ?? []}
+          />
           <div className="mt-3">
             <SearchSelect
               label={t('cabinet.assign')}
@@ -137,6 +115,11 @@ function Notebook({ link }: { link: CareLink }) {
           >
             {t(sendState === 'busy' ? 'cabinet.sending' : 'cabinet.sendTask')}
           </Button>
+        </Card>
+      ) : (share?.practices ?? []).length > 0 ? (
+        <Card>
+          <h2 className="text-base font-medium">{t('session.practiced')}</h2>
+          <WeekWork assignments={[]} practices={share?.practices ?? []} />
         </Card>
       ) : null}
       {link.scope.journal ? (
@@ -211,7 +194,7 @@ function PatientList({ links }: { links: CareLink[] }) {
           <Link
             key={item.id}
             to={`/cabinet/${item.id}`}
-            className="rounded-2xl border border-line bg-card px-5 py-4 text-sm"
+            className="break-all rounded-2xl border border-line bg-card px-4 py-4 text-sm sm:px-5"
           >
             {item.patientEmail || t('cabinet.patient')}
           </Link>

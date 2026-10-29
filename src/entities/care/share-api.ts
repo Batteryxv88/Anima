@@ -263,7 +263,7 @@ export function listenLinks(uid: string) {
   return () => stop.forEach((item) => item())
 }
 
-function snapshotFromCare(link: CareLink, care: CareSnapshot): ShareSnapshot {
+function snapshotFromCare(link: CareLink, care: CareSnapshot, patientName?: string): ShareSnapshot {
   return {
     patientUid: link.patientUid,
     therapistUid: link.therapistUid,
@@ -277,15 +277,18 @@ function snapshotFromCare(link: CareLink, care: CareSnapshot): ShareSnapshot {
     assignments: link.scope.assignments ? care.assignments.filter((item) => isThisWeek(item.createdAt.slice(0, 10))) : [],
     practices: care.practices.filter((item) => isThisWeek(item.at.slice(0, 10))),
     sessionNote: care.sessionNote,
+    ...(patientName !== undefined ? { patientName } : {}),
   }
 }
 
-export async function pushShareSnapshots(uid: string) {
+export async function pushShareSnapshots(uid: string, patientName?: string) {
   const db = getFirebaseDb()
   if (!db) return
   const links = useShareStore.getState().patientLinks.filter((item) => item.patientUid === uid && !item.revoked)
   const care = useCareStore.getState()
-  await Promise.all(links.map((link) => setDoc(doc(db, 'shares', link.id), snapshotFromCare(link, care))))
+  await Promise.all(
+    links.map((link) => setDoc(doc(db, 'shares', link.id), snapshotFromCare(link, care, patientName), { merge: true })),
+  )
 }
 
 async function applyShareNotes(linkId: string, data: ShareNotes) {
@@ -408,8 +411,8 @@ export async function addTherapistComment(link: CareLink, text: string) {
   })
 }
 
-export async function syncPatientShares(uid: string) {
+export async function syncPatientShares(uid: string, patientName?: string) {
   await refreshLinks(uid)
   await consumeTherapistNotes(uid)
-  await pushShareSnapshots(uid)
+  await pushShareSnapshots(uid, patientName)
 }

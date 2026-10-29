@@ -36,6 +36,7 @@ type UserState = {
   setLargeText: (largeText: boolean) => void
   setCountry: (country: Country) => void
   setMode: (mode: CareMode) => void
+  setDisplayName: (displayName: string) => void
   setSession: (session: Session | null) => void
   setRole: (role: StaffRole) => void
   setAuthReady: (authReady: boolean) => void
@@ -86,6 +87,7 @@ export const useUserStore = create<UserState>()(
       setLargeText: (largeText) => set({ largeText }),
       setCountry: (country) => set({ country }),
       setMode: (mode) => set({ mode }),
+      setDisplayName: (displayName) => set({ displayName: displayName.trim() }),
       setSession: (session) =>
         set(
           session

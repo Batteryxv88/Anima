@@ -112,7 +112,7 @@ export function AnswerList({
   return (
     <ul className="mt-2 grid gap-1">
       {lines.map((item) => (
-        <li key={item.id} className="text-sm leading-relaxed">
+        <li key={item.id} className="break-words text-sm leading-relaxed">
           <span className="text-muted">{item.label}: </span>
           {item.value}
         </li>

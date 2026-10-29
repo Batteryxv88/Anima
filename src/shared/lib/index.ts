@@ -1,6 +1,6 @@
 export { cn } from './cn'
 export { isCloudLocked, withCloudLock } from './cloud-lock'
-export { formatDay, formatStamp, isThisWeek, startOfWeek, todayId, weekRangeLabel } from './dates'
+export { formatDay, formatStamp, isThisWeek, startOfWeek, todayId, weekDates, weekRangeLabel } from './dates'
 export { createId } from './id'
 export { rememberNext, takeNext } from './next-path'
 export { scaleWordKey, type ScaleKind } from './scales'

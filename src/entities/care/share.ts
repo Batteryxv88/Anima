@@ -35,6 +35,7 @@ export type ShareSnapshot = {
   patientUid: string
   therapistUid: string
   patientEmail: string
+  patientName?: string
   scope: ShareScope
   updatedAt: string
   checkIns: CheckIn[]
