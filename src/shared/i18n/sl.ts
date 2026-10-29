@@ -16,6 +16,7 @@ export const sl = {
       'Tu lahko označite razpoloženje, tesnobo in spanec. Naredite kratko vajo, ko vas preplavi. Zapišite misel, da se ne vrti ves dan.',
     welcomeNote:
       'Če hodite k psihologu ali psihoterapevtu, vam bodo ti zapiski prav prišli na srečanju. Če ne hodite, lahko aplikacijo uporabljate samo zase. Ne postavlja diagnoze in ne nadomešča zdravnika. Ko je res hudo, so v aplikaciji telefonske številke za pomoč.',
+    welcomeBreathHint: 'Izdihnete lahko skupaj s krogom.',
     languageTitle: 'Jezik',
     languageText: 'Pozneje ga lahko spremenite v profilu.',
     themeTitle: 'Kako naj izgleda',

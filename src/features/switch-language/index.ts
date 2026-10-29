@@ -1,1 +1,1 @@
-export { LanguageSwitch } from './ui'
+export { LanguageSwitch, WelcomeLanguageSwitch } from './ui'

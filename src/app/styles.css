@@ -159,7 +159,83 @@
   overflow: hidden;
 }
 
+.anima-welcome-scene {
+  background: var(--color-canvas);
+}
+
+.anima-welcome-bg {
+  background:
+    radial-gradient(
+      ellipse 90% 70% at 15% 8%,
+      color-mix(in srgb, var(--color-sage) 14%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 85% 65% at 88% 92%,
+      color-mix(in srgb, var(--color-sand) 12%, transparent),
+      transparent 52%
+    );
+}
+
+.anima-welcome-grain {
+  opacity: 0.04;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+html.dark .anima-welcome-grain {
+  mix-blend-mode: soft-light;
+  opacity: 0.06;
+}
+
+.anima-welcome-horizon {
+  color: var(--color-sage);
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  @keyframes anima-welcome-drift {
+    from {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    to {
+      transform: translate3d(2%, -1.5%, 0) scale(1.04);
+    }
+  }
+
+  @keyframes anima-welcome-bead {
+    0%,
+    100% {
+      opacity: 0.35;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.95;
+      transform: scale(1.35);
+    }
+  }
+
+  @keyframes anima-horizon-breathe {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  .anima-welcome-bg {
+    animation: anima-welcome-drift 28s ease-in-out infinite alternate;
+  }
+
+  .anima-welcome-bead {
+    animation: anima-welcome-bead 7.5s ease-in-out infinite;
+  }
+
+  .anima-welcome-horizon {
+    animation: anima-horizon-breathe 7.5s ease-in-out infinite;
+  }
+
   @keyframes anima-breath {
     0%,
     100% {

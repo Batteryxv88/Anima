@@ -16,6 +16,7 @@ export const en = {
       'You can mark your mood, anxiety, and sleep. Try a short exercise when it gets too much. Write a thought down so it does not spin all day.',
     welcomeNote:
       'If you see a psychologist or psychotherapist, you can bring these notes to the appointment. If you do not, you can still use the app for yourself. It does not diagnose and does not replace a doctor. When things are really bad, help lines are inside.',
+    welcomeBreathHint: 'You can breathe out with the circle.',
     languageTitle: 'Language',
     languageText: 'You can change this later in your profile.',
     themeTitle: 'How it should look',
