@@ -1,11 +1,11 @@
-import { useState, type CSSProperties } from 'react'
+import { useState, type AnimationEvent, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useUserStore } from '@/entities/user'
 import { WelcomeLanguageSwitch } from '@/features/switch-language'
 import { ThemeSwitch } from '@/features/toggle-theme'
 import { APP_NAME, careModes, countries, type CareMode, type Country } from '@/shared/config'
-import { takeNext } from '@/shared/lib'
+import { cn, takeNext } from '@/shared/lib'
 import { Button, Card, ChoiceButton, ChoiceGroup } from '@/shared/ui'
 
 const welcomeBeads: { className: string; style: CSSProperties }[] = [
@@ -17,7 +17,7 @@ const welcomeBeads: { className: string; style: CSSProperties }[] = [
 function WelcomeHorizon() {
   return (
     <svg
-      className="anima-welcome-horizon pointer-events-none absolute inset-x-0 bottom-0 h-[min(30vh,13rem)] w-full"
+      className="anima-welcome-horizon pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(44vh,16rem)] w-full sm:h-[min(32vh,13rem)]"
       viewBox="0 0 400 100"
       preserveAspectRatio="none"
       aria-hidden="true"
@@ -38,67 +38,126 @@ function WelcomeHorizon() {
 
 function WelcomeMark() {
   return (
-    <div className="relative mx-auto flex size-[11.5rem] items-center justify-center" aria-hidden="true">
+    <div
+      className="relative mx-auto flex size-[9.5rem] items-center justify-center sm:size-[11.5rem]"
+      aria-hidden="true"
+    >
       {welcomeBeads.map((bead) => (
         <span
           key={bead.className}
-          className={`absolute size-2.5 rounded-full ${bead.className}`}
+          className={`absolute size-2 rounded-full sm:size-2.5 ${bead.className}`}
           style={bead.style}
         />
       ))}
-      <span className="anima-breath-ring absolute size-36 rounded-full bg-sage/15" />
-      <span className="anima-breath absolute size-28 rounded-full bg-sage/22" />
-      <span className="relative text-xl font-medium tracking-tight">{APP_NAME}</span>
+      <span className="anima-breath-ring absolute size-28 rounded-full bg-sage/15 sm:size-36" />
+      <span className="anima-breath absolute size-[5.5rem] rounded-full bg-sage/22 sm:size-28" />
+      <span className="relative text-lg font-medium tracking-tight sm:text-xl">{APP_NAME}</span>
     </div>
   )
 }
 
-function WelcomeScene({ language, onNext }: { language: string; onNext: () => void }) {
+function WelcomeHero() {
   const { t } = useTranslation()
+  return (
+    <>
+      <WelcomeLanguageSwitch />
+      <div className="flex flex-col items-center py-3 sm:py-6">
+        <WelcomeMark />
+        <p
+          className="anima-welcome-line mt-3 max-w-xs text-center text-sm text-muted sm:mt-5"
+          style={{ animationDelay: '180ms' }}
+        >
+          {t('onboarding.welcomeBreathHint')}
+        </p>
+      </div>
+    </>
+  )
+}
+
+function WelcomeStory({ language }: { language: string }) {
+  const { t } = useTranslation()
+  return (
+    <div key={language} className="w-full">
+      <h1
+        className="anima-welcome-line text-center text-xl font-medium leading-snug tracking-tight sm:text-[1.85rem]"
+        style={{ animationDelay: '340ms' }}
+      >
+        {t('onboarding.welcomeTitle')}
+      </h1>
+      <p
+        className="anima-welcome-line mt-4 text-center text-[0.9375rem] leading-relaxed text-ink/90 sm:mt-5 sm:text-base"
+        style={{ animationDelay: '560ms' }}
+      >
+        {t('onboarding.welcomeBody')}
+      </p>
+      <p
+        className="anima-welcome-line mt-3 text-center text-sm leading-relaxed text-muted sm:mt-4"
+        style={{ animationDelay: '780ms' }}
+      >
+        {t('onboarding.welcomeNote')}
+      </p>
+    </div>
+  )
+}
+
+function WelcomeNextButton({ leaving, onClick }: { leaving: boolean; onClick: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <Button
+      className="relative z-10 min-h-11 w-auto min-w-[12rem] px-10 text-sm shadow-sm shadow-sage/15"
+      disabled={leaving}
+      onClick={onClick}
+    >
+      {t('onboarding.next')}
+    </Button>
+  )
+}
+
+function WelcomeScene({ language, onDone }: { language: string; onDone: () => void }) {
+  const [leaving, setLeaving] = useState(false)
+
+  const finishWelcome = () => {
+    onDone()
+  }
+
+  const handleNext = () => {
+    if (leaving) return
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduceMotion) {
+      finishWelcome()
+      return
+    }
+    setLeaving(true)
+  }
+
+  const handleLeaveAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
+    if (!leaving || event.target !== event.currentTarget) return
+    if (event.animationName !== 'anima-welcome-out' && event.animationName !== 'anima-fade-out') return
+    finishWelcome()
+  }
 
   return (
-    <div className="anima-welcome-scene relative min-h-dvh overflow-hidden">
+    <div
+      className={cn(
+        'anima-welcome-scene relative flex h-dvh flex-col overflow-hidden',
+        leaving && 'anima-welcome-scene-leaving',
+      )}
+      onAnimationEnd={handleLeaveAnimationEnd}
+    >
       <div className="anima-welcome-bg pointer-events-none absolute inset-0" aria-hidden="true" />
       <div className="anima-welcome-grain pointer-events-none absolute inset-0" aria-hidden="true" />
       <WelcomeHorizon />
 
-      <div className="relative z-10 mx-auto flex min-h-dvh max-w-lg flex-col px-4 pb-8 pt-5 sm:px-6">
-        <WelcomeLanguageSwitch />
-
-        <div className="flex flex-1 flex-col items-center justify-center py-6">
-          <WelcomeMark />
-          <p
-            className="anima-welcome-line mt-5 max-w-xs text-center text-sm text-muted"
-            style={{ animationDelay: '180ms' }}
-          >
-            {t('onboarding.welcomeBreathHint')}
-          </p>
-
-          <div key={language} className="mt-8 w-full">
-            <h1
-              className="anima-welcome-line text-center text-[1.65rem] font-medium leading-snug tracking-tight sm:text-[1.85rem]"
-              style={{ animationDelay: '340ms' }}
-            >
-              {t('onboarding.welcomeTitle')}
-            </h1>
-            <p
-              className="anima-welcome-line mt-5 text-center text-base leading-relaxed text-ink/90"
-              style={{ animationDelay: '560ms' }}
-            >
-              {t('onboarding.welcomeBody')}
-            </p>
-            <p
-              className="anima-welcome-line mt-4 text-center text-sm leading-relaxed text-muted"
-              style={{ animationDelay: '780ms' }}
-            >
-              {t('onboarding.welcomeNote')}
-            </p>
-          </div>
+      <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col px-4 pt-3 sm:px-6 sm:pt-5">
+        <div className="shrink-0">
+          <WelcomeHero />
         </div>
-
-        <Button className="w-full shrink-0" onClick={onNext}>
-          {t('onboarding.next')}
-        </Button>
+        <div className="anima-welcome-scroll mt-4 min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-2 sm:mt-6">
+          <WelcomeStory language={language} />
+        </div>
+        <div className="flex shrink-0 justify-center pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:pt-3">
+          <WelcomeNextButton leaving={leaving} onClick={handleNext} />
+        </div>
       </div>
     </div>
   )
@@ -159,7 +218,7 @@ export function OnboardingPage() {
   ]
 
   if (step === 0) {
-    return <WelcomeScene language={language} onNext={() => setStep(1)} />
+    return <WelcomeScene language={language} onDone={() => setStep(1)} />
   }
 
   const current = setupSteps[step - 1]
