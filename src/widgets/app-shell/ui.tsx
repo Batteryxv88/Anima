@@ -32,6 +32,7 @@ export function AppShell() {
   const uid = useUserStore((state) => state.uid)
   const authReady = useUserStore((state) => state.authReady)
   const displayName = useUserStore((state) => state.displayName)
+  const profileLabel = uid && displayName.trim() ? displayName.trim() : ''
   const needName = authReady && Boolean(uid) && !displayName.trim() && location.pathname !== '/crisis'
   const isSpecialist = useShareStore((state) => state.therapistLinks.length > 0)
   const items = isSpecialist
@@ -46,12 +47,16 @@ export function AppShell() {
     location.pathname.startsWith('/staff') ||
     cabinetPerson ||
     (!isSpecialist && location.pathname.startsWith('/cabinet'))
-  const backTo = location.pathname.startsWith('/skills/')
-    ? practiceFrom(location.state)
-    : cabinetPerson
-      ? '/cabinet'
-      : location.pathname.startsWith('/staff/techniques/')
-        ? '/staff/techniques'
+  const skillEditor =
+    location.pathname === '/skills/new' || /^\/skills\/[^/]+\/edit$/.test(location.pathname)
+  const backTo = skillEditor
+    ? location.pathname === '/skills/new'
+      ? '/skills'
+      : location.pathname.replace(/\/edit$/, '')
+    : location.pathname.startsWith('/skills/')
+      ? practiceFrom(location.state)
+      : cabinetPerson
+        ? '/cabinet'
         : location.pathname.startsWith('/staff') ||
             location.pathname.startsWith('/cabinet') ||
             location.pathname.startsWith('/join/')
@@ -132,13 +137,11 @@ export function AppShell() {
             <Link
               to="/profile"
               className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-2 text-muted hover:bg-card hover:text-ink"
-              aria-label={
-                displayName.trim() ? `${displayName.trim()}, ${t('nav.profile')}` : t('nav.profile')
-              }
+              aria-label={profileLabel ? `${profileLabel}, ${t('nav.profile')}` : t('nav.profile')}
             >
-              {displayName.trim() ? (
+              {profileLabel ? (
                 <span className="max-w-[5.5rem] truncate text-sm text-ink sm:max-w-[10rem] md:max-w-[14rem]">
-                  {displayName.trim()}
+                  {profileLabel}
                 </span>
               ) : null}
               <CircleUserRound size={22} strokeWidth={1.75} className="shrink-0" />

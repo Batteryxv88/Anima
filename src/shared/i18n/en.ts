@@ -11,6 +11,11 @@ export const en = {
     back: 'Back',
   },
   onboarding: {
+    welcomeTitle: 'Anima is a free app about how you feel.',
+    welcomeBody:
+      'You can mark your mood, anxiety, and sleep. Try a short exercise when it gets too much. Write a thought down so it does not spin all day.',
+    welcomeNote:
+      'If you see a psychologist or psychotherapist, you can bring these notes to the appointment. If you do not, you can still use the app for yourself. It does not diagnose and does not replace a doctor. When things are really bad, help lines are inside.',
     languageTitle: 'Language',
     languageText: 'You can change this later in your profile.',
     themeTitle: 'How it should look',
@@ -82,7 +87,7 @@ export const en = {
     title: 'Skills',
     all: 'All',
     duration: '{{count}} min',
-    empty: 'No skills yet. An admin adds them in the staff panel.',
+    empty: 'No skills yet.',
   },
   situation: {
     panic: 'Overwhelmed',
@@ -180,11 +185,12 @@ export const en = {
   staff: {
     open: 'Staff panels',
     rolesTitle: 'Roles',
-    rolesText: 'An admin edits the skill catalog. A superadmin also assigns roles. User diaries stay closed.',
+    rolesText: 'A superadmin assigns roles. Skills are edited in the library. User diaries stay closed.',
     catalogTitle: 'Skill catalog',
     catalogText: 'Changes show up in the library at once.',
-    addSkill: 'New skill',
-    editSkill: 'Edit skill',
+    addSkill: 'Add skill',
+    editSkill: 'Edit',
+    editTitle: 'Edit skill',
     duration: 'Minutes',
     school: 'School',
     situations: 'When it fits',

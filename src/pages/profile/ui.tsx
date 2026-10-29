@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { isStaffRole, signOutUser, useUserStore } from '@/entities/user'
+import { signOutUser, useUserStore } from '@/entities/user'
 import { InvitePanel, SharePanel } from './invite'
 import { LanguageSwitch } from '@/features/switch-language'
 import { ThemeSwitch } from '@/features/toggle-theme'
@@ -28,12 +28,9 @@ export function ProfilePage() {
           {uid ? (
             <div className="mt-3 grid gap-3">
               <p className="text-sm leading-relaxed text-muted">{email ?? t('auth.signedIn')}</p>
-              {isStaffRole(role) ? (
-                <Link
-                  to="/staff"
-                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-sage px-4 text-sm font-medium text-white"
-                >
-                  {t('staff.open')}
+              {role === 'superadmin' ? (
+                <Link to="/staff/roles" className="text-sm text-sage-deep">
+                  {t('staff.rolesTitle')}
                 </Link>
               ) : null}
               <Button variant="outline" onClick={() => void signOutUser()}>

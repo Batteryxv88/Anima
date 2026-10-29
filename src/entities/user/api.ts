@@ -72,34 +72,40 @@ export async function signOutUser() {
 
 export async function pullProfile(uid: string) {
   const db = getFirebaseDb()
-  if (!db) return
-  const snap = await getDoc(doc(db, 'users', uid))
-  if (!snap.exists()) {
-    await pushProfile(uid)
+  if (!db) {
+    useUserStore.getState().setProfileSynced(true)
     return
   }
-  withCloudLock(() => useUserStore.getState().applyProfile(snap.data()))
+  try {
+    const snap = await getDoc(doc(db, 'users', uid))
+    if (!snap.exists()) {
+      await pushProfile(uid, { includeDisplayName: true })
+      return
+    }
+    withCloudLock(() => useUserStore.getState().applyProfile(snap.data()))
+  } finally {
+    useUserStore.getState().setProfileSynced(true)
+  }
 }
 
-export async function pushProfile(uid: string) {
+export async function pushProfile(uid: string, options?: { includeDisplayName?: boolean }) {
   const db = getFirebaseDb()
   if (!db) return
   const state = useUserStore.getState()
-  await setDoc(
-    doc(db, 'users', uid),
-    {
-      language: state.language,
-      theme: state.theme,
-      largeText: state.largeText,
-      country: state.country,
-      mode: state.mode,
-      displayName: state.displayName,
-      onboardingComplete: state.onboardingComplete,
-      email: (state.email ?? '').trim().toLowerCase(),
-      updatedAt: new Date().toISOString(),
-    },
-    { merge: true },
-  )
+  const payload: Record<string, unknown> = {
+    language: state.language,
+    theme: state.theme,
+    largeText: state.largeText,
+    country: state.country,
+    mode: state.mode,
+    onboardingComplete: state.onboardingComplete,
+    email: (state.email ?? '').trim().toLowerCase(),
+    updatedAt: new Date().toISOString(),
+  }
+  if (options?.includeDisplayName || state.profileSynced) {
+    payload.displayName = state.displayName
+  }
+  await setDoc(doc(db, 'users', uid), payload, { merge: true })
 }
 
 export async function pullRole(uid: string, email: string | null) {

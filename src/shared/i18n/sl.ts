@@ -11,6 +11,11 @@ export const sl = {
     back: 'Nazaj',
   },
   onboarding: {
+    welcomeTitle: 'Anima je brezplačna aplikacija o tem, kako se počutite.',
+    welcomeBody:
+      'Tu lahko označite razpoloženje, tesnobo in spanec. Naredite kratko vajo, ko vas preplavi. Zapišite misel, da se ne vrti ves dan.',
+    welcomeNote:
+      'Če hodite k psihologu ali psihoterapevtu, vam bodo ti zapiski prav prišli na srečanju. Če ne hodite, lahko aplikacijo uporabljate samo zase. Ne postavlja diagnoze in ne nadomešča zdravnika. Ko je res hudo, so v aplikaciji telefonske številke za pomoč.',
     languageTitle: 'Jezik',
     languageText: 'Pozneje ga lahko spremenite v profilu.',
     themeTitle: 'Kako naj izgleda',
@@ -82,7 +87,7 @@ export const sl = {
     title: 'Veščine',
     all: 'Vse',
     duration: '{{count}} min',
-    empty: 'Veščin še ni. Doda jih admin v plošči osebja.',
+    empty: 'Veščin še ni.',
   },
   situation: {
     panic: 'Me je preplavilo',
@@ -180,11 +185,12 @@ export const sl = {
   staff: {
     open: 'Osebje',
     rolesTitle: 'Vloge',
-    rolesText: 'Admin ureja katalog veščin. Superadmin tudi dodeljuje vloge. Dnevniki uporabnikov ostanejo zaprti.',
+    rolesText: 'Superadmin dodeljuje vloge. Veščine se urejajo v knjižnici. Dnevniki uporabnikov ostanejo zaprti.',
     catalogTitle: 'Katalog veščin',
     catalogText: 'Spremembe so takoj v knjižnici.',
-    addSkill: 'Nova veščina',
-    editSkill: 'Uredi veščino',
+    addSkill: 'Dodaj veščino',
+    editSkill: 'Uredi',
+    editTitle: 'Uredi veščino',
     duration: 'Minute',
     school: 'Šola',
     situations: 'Kdaj ustreza',

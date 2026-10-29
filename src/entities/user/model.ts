@@ -30,6 +30,7 @@ type UserState = {
   email: string | null
   role: StaffRole
   authReady: boolean
+  profileSynced: boolean
   completeOnboarding: () => void
   setLanguage: (language: Locale) => void
   setTheme: (theme: Theme) => void
@@ -40,6 +41,7 @@ type UserState = {
   setSession: (session: Session | null) => void
   setRole: (role: StaffRole) => void
   setAuthReady: (authReady: boolean) => void
+  setProfileSynced: (profileSynced: boolean) => void
   applyProfile: (data: Partial<UserState>) => void
 }
 
@@ -81,6 +83,7 @@ export const useUserStore = create<UserState>()(
       email: null,
       role: 'user',
       authReady: false,
+      profileSynced: false,
       completeOnboarding: () => set({ onboardingComplete: true }),
       setLanguage: (language) => set({ language }),
       setTheme: (theme) => set({ theme }),
@@ -91,11 +94,24 @@ export const useUserStore = create<UserState>()(
       setSession: (session) =>
         set(
           session
-            ? { uid: session.uid, email: session.email, role: 'user' }
-            : { uid: null, email: null, role: 'user' },
+            ? {
+                uid: session.uid,
+                email: session.email,
+                role: 'user',
+                displayName: '',
+                profileSynced: false,
+              }
+            : {
+                uid: null,
+                email: null,
+                role: 'user',
+                displayName: '',
+                profileSynced: false,
+              },
         ),
       setRole: (role) => set({ role }),
       setAuthReady: (authReady) => set({ authReady }),
+      setProfileSynced: (profileSynced) => set({ profileSynced }),
       applyProfile: (data) =>
         set((state) => ({
           language: pickLocale(data.language, state.language),
@@ -103,7 +119,7 @@ export const useUserStore = create<UserState>()(
           largeText: typeof data.largeText === 'boolean' ? data.largeText : state.largeText,
           country: pickCountry(data.country, state.country),
           mode: pickMode(data.mode, state.mode),
-          displayName: typeof data.displayName === 'string' ? data.displayName : state.displayName,
+          displayName: typeof data.displayName === 'string' ? data.displayName : '',
           onboardingComplete:
             typeof data.onboardingComplete === 'boolean'
               ? data.onboardingComplete
@@ -119,8 +135,13 @@ export const useUserStore = create<UserState>()(
         largeText: state.largeText,
         country: state.country,
         mode: state.mode,
-        displayName: state.displayName,
       }),
+      merge: (persisted, current) => {
+        const saved = persisted as Partial<UserState> | undefined
+        if (!saved) return current
+        const { displayName: _drop, ...rest } = saved
+        return { ...current, ...rest, displayName: '' }
+      },
     },
   ),
 )

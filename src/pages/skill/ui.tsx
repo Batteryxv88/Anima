@@ -1,11 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useCareStore } from '@/entities/care'
 import { TechniqueFields, techniqueCopy, useTechniqueStore, type FieldAnswers } from '@/entities/technique'
+import { isStaffRole, useUserStore } from '@/entities/user'
 import { type Locale } from '@/shared/config'
 import { isThisWeek, practiceFrom } from '@/shared/lib'
 import { Button, Card, Field, NoticeLayer, PageHeader, RichText, TextArea, useNotice } from '@/shared/ui'
+
+const outlineLink =
+  'inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink hover:border-sage/40'
 
 export function SkillPage() {
   const { id } = useParams()
@@ -13,6 +17,7 @@ export function SkillPage() {
   const navigate = useNavigate()
   const back = practiceFrom(location.state)
   const { t, i18n } = useTranslation()
+  const role = useUserStore((state) => state.role)
   const technique = useTechniqueStore((state) => (id ? state.list.find((item) => item.id === id) : undefined))
   const addPractice = useCareStore((state) => state.addPractice)
   const addAssignment = useCareStore((state) => state.addAssignment)
@@ -30,6 +35,13 @@ export function SkillPage() {
   const [answers, setAnswers] = useState<FieldAnswers>({})
   const { notice, show, hide } = useNotice()
 
+  useEffect(() => {
+    const flash = location.state as { saved?: boolean } | null
+    if (!flash?.saved) return
+    show(t('staff.savedNotice'), t('staff.savedHint'))
+    navigate(location.pathname, { replace: true, state: {} })
+  }, [location.pathname, location.state, navigate, show, t])
+
   if (!technique) return <Navigate to="/skills" replace />
   const copy = techniqueCopy(technique, i18n.language as Locale)
 
@@ -39,7 +51,17 @@ export function SkillPage() {
       <Link to={back} className="mb-3 inline-flex min-h-11 items-center text-sm text-sage-deep">
         {back === '/skills' ? t('skill.backToList') : t('nav.back')}
       </Link>
-      <PageHeader title={copy.title} text={t('skills.duration', { count: technique.durationMin })} />
+      <PageHeader
+        title={copy.title}
+        text={t('skills.duration', { count: technique.durationMin })}
+        action={
+          isStaffRole(role) ? (
+            <Link to={`/skills/${technique.id}/edit`} className={outlineLink}>
+              {t('staff.editSkill')}
+            </Link>
+          ) : null
+        }
+      />
       <div className="grid gap-4">
         <Card>
           <p className="text-xs uppercase tracking-wide text-sand">{t(`school.${technique.school}`)}</p>

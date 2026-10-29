@@ -24,7 +24,7 @@ export function StaffRolesPage() {
     reload()
   }, [])
 
-  if (myRole !== 'superadmin') return <Navigate to="/staff/techniques" replace />
+  if (myRole !== 'superadmin') return <Navigate to="/profile" replace />
 
   return (
     <>

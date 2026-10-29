@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { isStaffRole, useUserStore } from '@/entities/user'
 import {
   deleteTechnique,
   emptyField,
@@ -11,62 +12,20 @@ import {
   saveTechnique,
   schools,
   situations,
-  techniqueCopy,
   useTechniqueStore,
   type FieldKind,
   type School,
   type Situation,
   type Technique,
 } from '@/entities/technique'
-import type { Locale } from '@/shared/config'
-import { Button, Card, ChoiceButton, EmptyState, Field, FormatArea, NoticeLayer, PageHeader, TextArea, TextField, useNotice } from '@/shared/ui'
-
-export function StaffCatalogPage() {
-  const { t, i18n } = useTranslation()
-  const locale = i18n.language as Locale
-  const list = useTechniqueStore((state) => state.list)
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { notice, show, hide } = useNotice()
-
-  useEffect(() => {
-    const flash = location.state as { saved?: boolean; deleted?: boolean } | null
-    if (flash?.saved) show(t('staff.savedNotice'), t('staff.savedHint'))
-    else if (flash?.deleted) show(t('staff.deletedNotice'))
-    else return
-    navigate(location.pathname, { replace: true, state: {} })
-  }, [location.state, navigate, show, t])
-
-  return (
-    <>
-      <NoticeLayer notice={notice} onClose={hide} />
-      <PageHeader title={t('staff.catalogTitle')} text={t('staff.catalogText')} />
-      <Link
-        to="/staff/techniques/new"
-        className="mb-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-sage px-4 text-sm font-medium text-white"
-      >
-        {t('staff.addSkill')}
-      </Link>
-      {list.length === 0 ? (
-        <EmptyState>{t('skills.empty')}</EmptyState>
-      ) : (
-        <div className="grid gap-3">
-          {list.map((item) => (
-            <Link key={item.id} to={`/staff/techniques/${item.id}`} className="rounded-2xl border border-line bg-card px-5 py-4">
-              <p className="text-sm font-medium">{techniqueCopy(item, locale).title}</p>
-              <p className="mt-1 text-xs text-muted">{t(`school.${item.school}`)}</p>
-            </Link>
-          ))}
-        </div>
-      )}
-    </>
-  )
-}
+import { Button, Card, ChoiceButton, Field, FormatArea, PageHeader, TextArea, TextField } from '@/shared/ui'
 
 export function StaffTechniquePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const role = useUserStore((state) => state.role)
+  const authReady = useUserStore((state) => state.authReady)
   const list = useTechniqueStore((state) => state.list)
   const start = useMemo(() => {
     if (!id || id === 'new') return emptyTechnique()
@@ -79,6 +38,8 @@ export function StaffTechniquePage() {
   useEffect(() => {
     setDraft(start)
   }, [start])
+  if (!authReady) return null
+  if (!isStaffRole(role)) return <Navigate to="/skills" replace />
   const copy = draft.copy.ru
 
   const patchCopy = (next: Partial<typeof copy>) => {
@@ -90,7 +51,7 @@ export function StaffTechniquePage() {
 
   return (
     <>
-      <PageHeader title={id === 'new' ? t('staff.addSkill') : t('staff.editSkill')} />
+      <PageHeader title={!id || id === 'new' ? t('staff.addSkill') : t('staff.editTitle')} />
       <Card>
         <div className="grid gap-3">
           <Field label={t('staff.title')}>
@@ -267,7 +228,7 @@ export function StaffTechniquePage() {
                   void fillTranslations({ ...next, id: savedId })
                     .then((item) => saveTechnique(item))
                     .catch(() => undefined)
-                  navigate('/staff/techniques', { replace: true, state: { saved: true } })
+                  navigate(id && id !== 'new' ? `/skills/${id}` : '/skills', { replace: true, state: { saved: true } })
                 })
                 .catch(() => setError(t('staff.failed')))
                 .finally(() => setBusy(false))
@@ -281,7 +242,7 @@ export function StaffTechniquePage() {
               onClick={() => {
                 if (!window.confirm(t('staff.confirmDelete'))) return
                 void deleteTechnique(id)
-                  .then(() => navigate('/staff/techniques', { replace: true, state: { deleted: true } }))
+                  .then(() => navigate('/skills', { replace: true, state: { deleted: true } }))
                   .catch(() => setError(t('staff.failed')))
               }}
             >
