@@ -101,8 +101,17 @@ export const sl = {
   skills: {
     title: 'Veščine',
     all: 'Vse',
+    favorites: 'Priljubljene',
+    sortRating: 'Po oceni',
+    like: 'Med priljubljene',
+    unlike: 'Odstrani iz priljubljenih',
+    yourRating: 'Vaša ocena',
+    rateHint: 'Brez ocene',
+    ratingAvg: '★ {{avg}} · {{count}} ocen',
+    ratingAvgShort: '★ {{avg}}',
     duration: '{{count}} min',
     empty: 'Veščin še ni.',
+    emptyFavorites: 'Priljubljenih veščin še ni.',
   },
   situation: {
     panic: 'Me je preplavilo',

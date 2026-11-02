@@ -101,8 +101,17 @@ export const en = {
   skills: {
     title: 'Skills',
     all: 'All',
+    favorites: 'Favorites',
+    sortRating: 'Top rated',
+    like: 'Add to favorites',
+    unlike: 'Remove from favorites',
+    yourRating: 'Your rating',
+    rateHint: 'Not rated',
+    ratingAvg: '★ {{avg}} · {{count}} ratings',
+    ratingAvgShort: '★ {{avg}}',
     duration: '{{count}} min',
     empty: 'No skills yet.',
+    emptyFavorites: 'No favorite skills yet.',
   },
   situation: {
     panic: 'Overwhelmed',

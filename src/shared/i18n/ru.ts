@@ -101,8 +101,17 @@ export const ru = {
   skills: {
     title: 'Навыки',
     all: 'Все',
+    favorites: 'Избранное',
+    sortRating: 'По рейтингу',
+    like: 'В избранное',
+    unlike: 'Убрать из избранного',
+    yourRating: 'Ваша оценка',
+    rateHint: 'Не оценено',
+    ratingAvg: '★ {{avg}} · {{count}} оценок',
+    ratingAvgShort: '★ {{avg}}',
     duration: '{{count}} мин',
     empty: 'Пока нет навыков.',
+    emptyFavorites: 'Пока нет избранных навыков.',
   },
   situation: {
     panic: 'Накрыло',

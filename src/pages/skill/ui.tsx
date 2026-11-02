@@ -12,6 +12,7 @@ import {
 import { isStaffRole, useUserStore } from '@/entities/user'
 import { type Locale } from '@/shared/config'
 import { isThisWeek, practiceFrom } from '@/shared/lib'
+import { SkillLikeButton, SkillStarRating } from '@/entities/technique'
 import { Button, Card, Field, NoticeLayer, PageHeader, RichText, TextArea, useNotice } from '@/shared/ui'
 
 const outlineLink =
@@ -70,7 +71,10 @@ export function SkillPage() {
       />
       <TechniqueCover coverUrl={technique.coverUrl} />
       <div className="grid gap-4">
-        <Card>
+        <Card className="relative pr-10">
+          <div className="absolute right-3 top-3">
+            <SkillLikeButton techniqueId={technique.id} ghost />
+          </div>
           <p className="text-xs uppercase tracking-wide text-sand">{t(`school.${technique.school}`)}</p>
           {copy.when.trim() ? (
             <>
@@ -113,6 +117,7 @@ export function SkillPage() {
             />
           </Card>
         ) : null}
+        <SkillStarRating techniqueId={technique.id} />
         <Button
           variant="outline"
           className="w-full"

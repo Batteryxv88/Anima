@@ -1,4 +1,5 @@
 export { pullCare, pushCare } from './api'
+export { isSkillLiked, setSkillLike, setSkillRating, skillRating } from './skill-prefs'
 export {
   useCareStore,
   type Assignment,
@@ -8,6 +9,7 @@ export {
   type JournalEntry,
   type JournalKind,
   type Practice,
+  type SkillPref,
 } from './model'
 export {
   addPendingAssignment,

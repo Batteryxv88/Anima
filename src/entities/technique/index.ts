@@ -9,6 +9,13 @@ export {
   saveTechnique,
   useTechniqueStore,
 } from './api'
+export {
+  averageRating,
+  listenTechniqueStats,
+  normalizeSkillRating,
+  useTechniqueStatsStore,
+  type TechniqueStats,
+} from './stats'
 export { uploadTechniqueCover } from './cover'
 export {
   fieldKinds,
@@ -24,4 +31,5 @@ export {
   type Technique,
   type TechniqueField,
 } from './model'
+export { SkillAverageRating, SkillLikeButton, SkillStarRating, SkillUserRating } from './skill-feedback'
 export { AnswerList, TechniqueCard, TechniqueCover, TechniqueFields } from './ui'

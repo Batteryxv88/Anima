@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { situations, TechniqueCard, useTechniqueStore, type Situation } from '@/entities/technique'
+import { useCareStore } from '@/entities/care'
+import { averageRating, situations, TechniqueCard, useTechniqueStatsStore, useTechniqueStore, type Situation } from '@/entities/technique'
 import { isStaffRole, useUserStore } from '@/entities/user'
 import { Chip, EmptyState, NoticeLayer, PageHeader, useNotice } from '@/shared/ui'
 
@@ -14,17 +15,31 @@ export function SkillsPage() {
   const navigate = useNavigate()
   const role = useUserStore((state) => state.role)
   const [filter, setFilter] = useState<Situation | 'all'>('all')
+  const [favoritesOnly, setFavoritesOnly] = useState(false)
+  const [sortRating, setSortRating] = useState(false)
   const techniques = useTechniqueStore((state) => state.list)
+  const skillPrefs = useCareStore((state) => state.skillPrefs)
+  const statsById = useTechniqueStatsStore((state) => state.byId)
   const { notice, show, hide } = useNotice()
   const used = useMemo(
     () => situations.filter((item) => techniques.some((technique) => technique.situations.includes(item))),
     [techniques],
   )
   const active = filter !== 'all' && used.includes(filter) ? filter : 'all'
-  const list = useMemo(
-    () => (active === 'all' ? techniques : techniques.filter((item) => item.situations.includes(active))),
-    [active, techniques],
-  )
+  const list = useMemo(() => {
+    let next = active === 'all' ? techniques : techniques.filter((item) => item.situations.includes(active))
+    if (favoritesOnly) {
+      next = next.filter((item) => Boolean(skillPrefs[item.id]?.liked))
+    }
+    if (sortRating) {
+      next = [...next].sort((a, b) => {
+        const avgA = averageRating(statsById[a.id]) ?? 0
+        const avgB = averageRating(statsById[b.id]) ?? 0
+        return avgB - avgA
+      })
+    }
+    return next
+  }, [active, favoritesOnly, skillPrefs, sortRating, statsById, techniques])
 
   useEffect(() => {
     const flash = location.state as { saved?: boolean; deleted?: boolean } | null
@@ -47,20 +62,31 @@ export function SkillsPage() {
           ) : null
         }
       />
-      {used.length > 0 ? (
-        <div className="mb-5 flex flex-wrap gap-2">
-          <Chip active={active === 'all'} onClick={() => setFilter('all')}>
-            {t('skills.all')}
+      <div className="mb-5 flex flex-wrap gap-2">
+        <Chip active={!favoritesOnly && active === 'all'} onClick={() => { setFavoritesOnly(false); setFilter('all') }}>
+          {t('skills.all')}
+        </Chip>
+        <Chip active={favoritesOnly} onClick={() => setFavoritesOnly((value) => !value)}>
+          {t('skills.favorites')}
+        </Chip>
+        <Chip active={sortRating} onClick={() => setSortRating((value) => !value)}>
+          {t('skills.sortRating')}
+        </Chip>
+        {used.map((item) => (
+          <Chip
+            key={item}
+            active={!favoritesOnly && active === item}
+            onClick={() => {
+              setFavoritesOnly(false)
+              setFilter(item)
+            }}
+          >
+            {t(`situation.${item}`)}
           </Chip>
-          {used.map((item) => (
-            <Chip key={item} active={active === item} onClick={() => setFilter(item)}>
-              {t(`situation.${item}`)}
-            </Chip>
-          ))}
-        </div>
-      ) : null}
+        ))}
+      </div>
       {list.length === 0 ? (
-        <EmptyState>{t('skills.empty')}</EmptyState>
+        <EmptyState>{favoritesOnly ? t('skills.emptyFavorites') : t('skills.empty')}</EmptyState>
       ) : (
         <div className="grid gap-3">
           {list.map((item) => (

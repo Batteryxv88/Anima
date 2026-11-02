@@ -49,6 +49,11 @@ export type JournalEntry = {
   otherLook: string
 }
 
+export type SkillPref = {
+  liked?: boolean
+  rating?: number
+}
+
 export type CareSnapshot = {
   checkIns: CheckIn[]
   assignments: Assignment[]
@@ -56,6 +61,7 @@ export type CareSnapshot = {
   journal: JournalEntry[]
   sessionNote: string
   crisisPlan: CrisisPlan
+  skillPrefs: Record<string, SkillPref>
 }
 
 type CareState = CareSnapshot & {
@@ -71,6 +77,8 @@ type CareState = CareSnapshot & {
   removeJournalEntry: (id: string) => void
   setSessionNote: (sessionNote: string) => void
   setCrisisPlan: (crisisPlan: CrisisPlan) => void
+  setSkillLike: (techniqueId: string, liked: boolean) => void
+  setSkillRating: (techniqueId: string, rating: number | undefined) => void
   replaceCare: (payload: CareSnapshot) => void
 }
 
@@ -85,6 +93,7 @@ export const useCareStore = create<CareState>()(
       journal: [],
       sessionNote: '',
       crisisPlan: emptyPlan,
+      skillPrefs: {},
       saveCheckIn: (entry) => {
         const date = entry.date ?? todayId()
         const next = get().checkIns.filter((item) => item.date !== date)
@@ -168,7 +177,30 @@ export const useCareStore = create<CareState>()(
         set({ journal: get().journal.filter((item) => item.id !== id) }),
       setSessionNote: (sessionNote) => set({ sessionNote }),
       setCrisisPlan: (crisisPlan) => set({ crisisPlan }),
-      replaceCare: (payload) => set(payload),
+      setSkillLike: (techniqueId, liked) =>
+        set((state) => {
+          const current = state.skillPrefs[techniqueId] ?? {}
+          const next: SkillPref = { ...current, ...(liked ? { liked: true } : {}) }
+          if (!liked) delete next.liked
+          if (!next.liked && next.rating == null) {
+            const { [techniqueId]: _drop, ...rest } = state.skillPrefs
+            return { skillPrefs: rest }
+          }
+          return { skillPrefs: { ...state.skillPrefs, [techniqueId]: next } }
+        }),
+      setSkillRating: (techniqueId, rating) =>
+        set((state) => {
+          const current = state.skillPrefs[techniqueId] ?? {}
+          const nextRating = rating != null && rating >= 1 && rating <= 5 ? rating : undefined
+          const next: SkillPref = { ...current, ...(nextRating ? { rating: nextRating } : {}) }
+          if (!nextRating) delete next.rating
+          if (!next.liked && next.rating == null) {
+            const { [techniqueId]: _drop, ...rest } = state.skillPrefs
+            return { skillPrefs: rest }
+          }
+          return { skillPrefs: { ...state.skillPrefs, [techniqueId]: next } }
+        }),
+      replaceCare: (payload) => set({ ...payload, skillPrefs: payload.skillPrefs ?? {} }),
     }),
     { name: 'anima-care' },
   ),

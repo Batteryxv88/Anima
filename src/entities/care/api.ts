@@ -1,7 +1,21 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { getFirebaseDb } from '@/shared/firebase'
 import { withCloudLock } from '@/shared/lib'
-import { useCareStore, type JournalEntry, type JournalKind } from './model'
+import { normalizeSkillRating } from '@/entities/technique/stats'
+import { useCareStore, type JournalEntry, type JournalKind, type SkillPref } from './model'
+
+function asSkillPrefs(raw: unknown): Record<string, SkillPref> {
+  if (!raw || typeof raw !== 'object') return {}
+  const out: Record<string, SkillPref> = {}
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!value || typeof value !== 'object') continue
+    const item = value as Record<string, unknown>
+    const liked = item.liked === true ? true : undefined
+    const rating = normalizeSkillRating(item.rating)
+    if (liked || rating) out[key] = { ...(liked ? { liked: true } : {}), ...(rating ? { rating } : {}) }
+  }
+  return out
+}
 
 function asJournal(raw: unknown): JournalEntry[] {
   if (!Array.isArray(raw)) return []
@@ -47,6 +61,7 @@ export async function pullCare(uid: string) {
         whoToCall: String(data.crisisPlan?.whoToCall ?? ''),
         avoid: String(data.crisisPlan?.avoid ?? ''),
       },
+      skillPrefs: asSkillPrefs(data.skillPrefs),
     }),
   )
 }
@@ -64,6 +79,7 @@ export async function pushCare(uid: string) {
       journal: state.journal,
       sessionNote: state.sessionNote,
       crisisPlan: state.crisisPlan,
+      skillPrefs: state.skillPrefs,
       updatedAt: new Date().toISOString(),
     },
     { merge: true },

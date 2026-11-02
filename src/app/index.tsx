@@ -10,7 +10,7 @@ import {
   useCareStore,
   useShareStore,
 } from '@/entities/care'
-import { listenTechniques } from '@/entities/technique'
+import { listenTechniqueStats, listenTechniques } from '@/entities/technique'
 import { listenAuth, pullProfile, pushProfile, useUserStore } from '@/entities/user'
 import { isCloudLocked } from '@/shared/lib'
 import { i18n } from '@/shared/i18n'
@@ -45,7 +45,14 @@ function DocumentSync({ children }: { children: ReactNode }) {
 }
 
 function CloudSync({ children }: { children: ReactNode }) {
-  useEffect(() => listenTechniques(), [])
+  useEffect(() => {
+    const stopTechniques = listenTechniques()
+    const stopStats = listenTechniqueStats()
+    return () => {
+      stopTechniques()
+      stopStats()
+    }
+  }, [])
 
   useEffect(() => {
     let timer = 0
