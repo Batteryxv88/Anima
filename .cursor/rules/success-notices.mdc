@@ -1,0 +1,19 @@
+---
+description: After save/edit/delete, show NoticeDialog; reuse shared notice UI
+alwaysApply: true
+---
+
+# Success notices
+
+After an explicit save, edit, assign, confirm, or delete, show a success modal. Reuse `useNotice`, `NoticeLayer`, and `NoticeDialog` from `@/shared/ui`. Do not copy overlay markup or add a second toast.
+
+- Keep the button as the action verb (`Save`, `Assign`). Do not change it to «Сохранили» / `Saved`.
+- Title: `common.savedNotice` or a short action-specific line. Hint only if it clarifies.
+- Skip live typing, chips, theme/language, and binary toggles that persist immediately.
+- If a form closes after save, show the modal on the screen the user lands on.
+
+```tsx
+const { notice, show, hide } = useNotice()
+show(t('common.savedNotice'), t('today.saved'))
+<NoticeLayer notice={notice} onClose={hide} />
+```
