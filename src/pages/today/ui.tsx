@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useCareStore, useShareStore } from '@/entities/care'
 import { localeTags, type Locale } from '@/shared/config'
-import { formatDay, scaleWordKey, todayId } from '@/shared/lib'
-import { Button, Card, NoticeLayer, PageHeader, Scale, useNotice } from '@/shared/ui'
+import { formatDay, normalizeScaleValue, SCALE_DEFAULT, scaleWordKey, todayId } from '@/shared/lib'
+import { Button, Card, NoticeLayer, PageHeader, ScaleTap, useNotice } from '@/shared/ui'
 import { HomeworkBlock } from '@/widgets/homework-block'
 
 export function TodayPage() {
@@ -13,9 +13,9 @@ export function TodayPage() {
   const saved = useCareStore((state) => state.checkIns.find((item) => item.date === todayId()))
   const saveCheckIn = useCareStore((state) => state.saveCheckIn)
   const isSpecialist = useShareStore((state) => state.therapistLinks.length > 0)
-  const [mood, setMood] = useState(saved?.mood ?? 5)
-  const [anxiety, setAnxiety] = useState(saved?.anxiety ?? 5)
-  const [sleep, setSleep] = useState(saved?.sleep ?? 5)
+  const [mood, setMood] = useState(() => normalizeScaleValue(saved?.mood ?? SCALE_DEFAULT))
+  const [anxiety, setAnxiety] = useState(() => normalizeScaleValue(saved?.anxiety ?? SCALE_DEFAULT))
+  const [sleep, setSleep] = useState(() => normalizeScaleValue(saved?.sleep ?? SCALE_DEFAULT))
   const { notice, show, hide } = useNotice()
 
   return (
@@ -32,7 +32,7 @@ export function TodayPage() {
         <Card>
           <h2 className="text-base font-medium text-ink">{t('today.checkIn')}</h2>
           <div className="mt-4 grid gap-4">
-            <Scale
+            <ScaleTap
               label={t('today.mood')}
               minLabel={t('scale.mood.min')}
               maxLabel={t('scale.mood.max')}
@@ -40,7 +40,7 @@ export function TodayPage() {
               value={mood}
               onChange={setMood}
             />
-            <Scale
+            <ScaleTap
               label={t('today.anxiety')}
               minLabel={t('scale.anxiety.min')}
               maxLabel={t('scale.anxiety.max')}
@@ -48,7 +48,7 @@ export function TodayPage() {
               value={anxiety}
               onChange={setAnxiety}
             />
-            <Scale
+            <ScaleTap
               label={t('today.sleep')}
               minLabel={t('scale.sleep.min')}
               maxLabel={t('scale.sleep.max')}
@@ -60,7 +60,11 @@ export function TodayPage() {
           <Button
             className="mt-5 w-full"
             onClick={() => {
-              saveCheckIn({ mood, anxiety, sleep })
+              saveCheckIn({
+                mood: normalizeScaleValue(mood),
+                anxiety: normalizeScaleValue(anxiety),
+                sleep: normalizeScaleValue(sleep),
+              })
               show(t('common.savedNotice'), t('today.saved'))
             }}
           >
@@ -77,9 +81,6 @@ export function TodayPage() {
           </Link>
           <Link to="/session" className="rounded-2xl border border-line bg-card px-5 py-4 text-sm text-sage-deep">
             {t('today.toSession')}
-          </Link>
-          <Link to="/paths" className="rounded-2xl border border-line bg-card px-5 py-4 text-sm text-sage-deep sm:col-span-2">
-            {t('paths.open')}
           </Link>
         </div>
       </div>

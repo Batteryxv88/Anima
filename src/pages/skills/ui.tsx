@@ -47,9 +47,6 @@ export function SkillsPage() {
           ) : null
         }
       />
-      <Link to="/paths" className="mb-5 block rounded-2xl border border-line bg-card px-5 py-4 text-sm text-sage-deep">
-        {t('paths.open')}
-      </Link>
       {used.length > 0 ? (
         <div className="mb-5 flex flex-wrap gap-2">
           <Chip active={active === 'all'} onClick={() => setFilter('all')}>

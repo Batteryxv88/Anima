@@ -10,8 +10,32 @@ export type Locale = (typeof locales)[number]
 export const themes = ['light', 'dark', 'system'] as const
 export type Theme = (typeof themes)[number]
 
-export const countries = ['si', 'ru', 'other'] as const
+export const countries = [
+  'si',
+  'ru',
+  'ua',
+  'by',
+  'kz',
+  'de',
+  'pl',
+  'cz',
+  'us',
+  'gb',
+  'fr',
+  'it',
+  'es',
+  'other',
+] as const
 export type Country = (typeof countries)[number]
+
+export const primaryCountries = ['ru'] as const
+export type PrimaryCountry = (typeof primaryCountries)[number]
+
+export const moreCountries = countries.filter((code): code is Country => code !== 'ru')
+
+export function isPrimaryCountry(country: Country): country is PrimaryCountry {
+  return country === 'ru'
+}
 
 export const careModes = ['self', 'with-therapist'] as const
 export type CareMode = (typeof careModes)[number]

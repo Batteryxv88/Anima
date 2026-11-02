@@ -9,11 +9,11 @@ export {
   saveTechnique,
   useTechniqueStore,
 } from './api'
+export { uploadTechniqueCover } from './cover'
 export {
   fieldKinds,
   fieldLabel,
   filledAnswers,
-  pathGroups,
   situations,
   schools,
   techniqueCopy,
@@ -24,4 +24,4 @@ export {
   type Technique,
   type TechniqueField,
 } from './model'
-export { AnswerList, TechniqueCard, TechniqueFields } from './ui'
+export { AnswerList, TechniqueCard, TechniqueCover, TechniqueFields } from './ui'

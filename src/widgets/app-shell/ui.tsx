@@ -31,9 +31,15 @@ export function AppShell() {
   const nameNotice = useNotice()
   const uid = useUserStore((state) => state.uid)
   const authReady = useUserStore((state) => state.authReady)
+  const profileSynced = useUserStore((state) => state.profileSynced)
   const displayName = useUserStore((state) => state.displayName)
   const profileLabel = uid && displayName.trim() ? displayName.trim() : ''
-  const needName = authReady && Boolean(uid) && !displayName.trim() && location.pathname !== '/crisis'
+  const needName =
+    authReady &&
+    profileSynced &&
+    Boolean(uid) &&
+    !displayName.trim() &&
+    location.pathname !== '/crisis'
   const isSpecialist = useShareStore((state) => state.therapistLinks.length > 0)
   const items = isSpecialist
     ? [{ to: '/cabinet', key: 'nav.cabinet', icon: 'cabinet' as const }, ...navItems]
@@ -42,7 +48,6 @@ export function AppShell() {
   const nested =
     location.pathname.startsWith('/skills/') ||
     location.pathname === '/journal' ||
-    location.pathname === '/paths' ||
     location.pathname.startsWith('/join/') ||
     location.pathname.startsWith('/staff') ||
     cabinetPerson ||

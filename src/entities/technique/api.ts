@@ -86,11 +86,13 @@ function asTechnique(id: string, data: Record<string, unknown>): CloudTechnique 
     ? data.situations.filter((item): item is Situation => situations.includes(item as Situation))
     : []
   const fields = Array.isArray(data.fields) ? data.fields.flatMap((item) => asField(item) ?? []) : []
+  const coverUrl = typeof data.coverUrl === 'string' ? data.coverUrl.trim() : ''
   return {
     id,
     school,
     situations: nextSituations,
     durationMin: Number(data.durationMin ?? 3) || 3,
+    coverUrl: coverUrl || undefined,
     copy,
     fields,
     deleted: Boolean(data.deleted),
@@ -106,6 +108,7 @@ function fromCloud(cloud: CloudTechnique[]): Technique[] {
       school: item.school,
       situations: item.situations,
       durationMin: item.durationMin,
+      coverUrl: item.coverUrl,
       copy: item.copy,
       fields: item.fields,
     }))
@@ -203,6 +206,7 @@ export async function saveTechnique(technique: Technique) {
     school: technique.school,
     situations: technique.situations,
     durationMin: technique.durationMin,
+    ...(technique.coverUrl?.trim() ? { coverUrl: technique.coverUrl.trim() } : {}),
     copy: {
       ...technique.copy,
       ru: {

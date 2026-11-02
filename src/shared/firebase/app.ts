@@ -1,10 +1,12 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app'
 import { getAuth, type Auth } from 'firebase/auth'
 import { getFirestore, type Firestore } from 'firebase/firestore'
+import { getStorage, type FirebaseStorage } from 'firebase/storage'
 
 let app: FirebaseApp | null = null
 let auth: Auth | null = null
 let db: Firestore | null = null
+let storage: FirebaseStorage | null = null
 
 export function isFirebaseConfigured() {
   return Boolean(import.meta.env.VITE_FIREBASE_API_KEY)
@@ -37,4 +39,11 @@ export function getFirebaseDb() {
   if (!instance) return null
   if (!db) db = getFirestore(instance)
   return db
+}
+
+export function getFirebaseStorage() {
+  const instance = getFirebaseApp()
+  if (!instance) return null
+  if (!storage) storage = getStorage(instance)
+  return storage
 }

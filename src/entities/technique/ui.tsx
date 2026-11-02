@@ -4,13 +4,44 @@ import {
   fieldLabel,
   fieldOptions,
   filledAnswers,
+  parseChoiceValues,
+  serializeChoiceValues,
   techniqueCopy,
   type FieldAnswers,
   type Technique,
   type TechniqueField,
 } from './model'
 import type { Locale } from '@/shared/config'
-import { ChoiceButton, Field, Scale, TextArea, TextField } from '@/shared/ui'
+import { cn, normalizeScaleValue, SCALE_MAX, SCALE_MIN } from '@/shared/lib'
+import { Chip, Field, Scale, TextArea, TextField } from '@/shared/ui'
+export function TechniqueCover({
+  coverUrl,
+  className,
+  compact,
+}: {
+  coverUrl?: string
+  className?: string
+  compact?: boolean
+}) {
+  if (!coverUrl?.trim()) return null
+  return (
+    <div
+      className={cn(
+        'overflow-hidden rounded-2xl border border-line bg-card',
+        compact ? 'mb-3' : 'mb-4',
+        className,
+      )}
+    >
+      <img
+        src={coverUrl}
+        alt=""
+        className={cn('w-full object-contain', compact ? 'max-h-28' : 'aspect-[4/3] max-h-56')}
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+  )
+}
 
 export function TechniqueCard({ technique, note }: { technique: Technique; note?: string }) {
   const { t, i18n } = useTranslation()
@@ -23,6 +54,7 @@ export function TechniqueCard({ technique, note }: { technique: Technique; note?
       state={{ from: location.pathname }}
       className="block rounded-2xl border border-line bg-card p-5 hover:border-sage/40"
     >
+      <TechniqueCover coverUrl={technique.coverUrl} compact />
       <p className="text-xs uppercase tracking-wide text-sand">{t(`school.${technique.school}`)}</p>
       <h2 className="mt-1 text-lg font-medium text-ink">{copy.title}</h2>
       <p className="mt-1 text-sm text-muted">{t('skills.duration', { count: technique.durationMin })}</p>
@@ -57,15 +89,15 @@ export function TechniqueFields({
           )
         }
         if (field.kind === 'scale') {
-          const number = value === '' ? 0 : Number(value)
+          const number = value === '' ? SCALE_MIN : normalizeScaleValue(Number(value))
           return (
             <Scale
               key={field.id}
               label={label}
-              minLabel="0"
-              maxLabel="10"
+              minLabel={String(SCALE_MIN)}
+              maxLabel={String(SCALE_MAX)}
               valueLabel={value === '' ? '—' : String(number)}
-              value={Number.isFinite(number) ? number : 0}
+              value={Number.isFinite(number) ? number : SCALE_MIN}
               onChange={(next) => onChange(field.id, String(next))}
             />
           )
@@ -73,16 +105,27 @@ export function TechniqueFields({
         if (field.kind === 'choice') {
           const options = fieldOptions(field, locale)
           const ruOptions = field.options?.ru ?? []
+          const selected = parseChoiceValues(value)
           return (
             <div key={field.id}>
               <p className="mb-1.5 text-sm text-muted">{label}</p>
-              <div className="grid gap-2">
+              <div className="flex flex-wrap gap-2">
                 {options.map((item, index) => {
                   const canonical = ruOptions[index] ?? item
+                  const active = selected.includes(canonical)
                   return (
-                    <ChoiceButton key={`${field.id}-${index}`} active={value === canonical} onClick={() => onChange(field.id, canonical)}>
+                    <Chip
+                      key={`${field.id}-${index}`}
+                      active={active}
+                      onClick={() => {
+                        const next = active
+                          ? selected.filter((entry) => entry !== canonical)
+                          : [...selected, canonical]
+                        onChange(field.id, serializeChoiceValues(next))
+                      }}
+                    >
                       {item}
-                    </ChoiceButton>
+                    </Chip>
                   )
                 })}
               </div>

@@ -1,7 +1,13 @@
 import { useTranslation } from 'react-i18next'
 import type { CheckIn } from '@/entities/care'
 import { localeTags, type Locale } from '@/shared/config'
-import { scaleWordKey, weekDates, type ScaleKind } from '@/shared/lib'
+import {
+  scalePlotNorm,
+  scaleStepValues,
+  scaleWordKey,
+  weekDates,
+  type ScaleKind,
+} from '@/shared/lib'
 
 const rows: { kind: ScaleKind; label: string; tone: string; bead: string }[] = [
   { kind: 'mood', label: 'today.mood', tone: 'text-sage', bead: 'bg-sage' },
@@ -11,19 +17,14 @@ const rows: { kind: ScaleKind; label: string; tone: string; bead: string }[] = [
 
 const paintOrder: ScaleKind[] = ['sleep', 'anxiety', 'mood']
 
-function plotted(kind: ScaleKind, value: number) {
-  const clamped = Math.min(10, Math.max(0, value))
-  return kind === 'anxiety' ? 10 - clamped : clamped
-}
-
-function markY(value: number) {
-  return 16 + (1 - value / 10) * 68
+function chartY(value: number) {
+  return 16 + (1 - scalePlotNorm(value)) * 68
 }
 
 function smoothPath(points: { x: number; y: number }[]) {
   if (points.length < 2) return ''
-  const low = markY(0)
-  const high = markY(10)
+  const low = chartY(1)
+  const high = chartY(5)
   const clamp = (y: number) => Math.min(low, Math.max(high, y))
   let path = `M ${points[0].x} ${points[0].y}`
   if (points.length === 2) return `${path} L ${points[1].x} ${points[1].y}`
@@ -41,7 +42,7 @@ function smoothPath(points: { x: number; y: number }[]) {
   return path
 }
 
-function curve(kind: ScaleKind, slots: (number | null)[]) {
+function curve(slots: (number | null)[]) {
   const segments: { x: number; y: number }[][] = []
   let current: { x: number; y: number }[] = []
   slots.forEach((value, index) => {
@@ -50,7 +51,7 @@ function curve(kind: ScaleKind, slots: (number | null)[]) {
       current = []
       return
     }
-    current.push({ x: ((index + 0.5) / 7) * 100, y: markY(plotted(kind, value)) })
+    current.push({ x: ((index + 0.5) / 7) * 100, y: chartY(value) })
   })
   if (current.length > 0) segments.push(current)
   return segments.map(smoothPath).filter(Boolean).join(' ')
@@ -97,17 +98,32 @@ export function WeekMarks({ checkIns }: { checkIns: CheckIn[] }) {
     })
     .join('. ')
 
+  const axisSteps = [...scaleStepValues].reverse()
+
   return (
     <div className="mt-4 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-2 sm:gap-x-3">
-      <div className="flex h-32 flex-col justify-between text-[10px] leading-tight text-muted sm:text-xs">
-        <span>{t('session.axisHigh')}</span>
-        <span>{t('session.axisLow')}</span>
+      <div className="flex h-32 flex-col justify-between text-[10px] tabular-nums leading-none text-muted sm:text-xs">
+        {axisSteps.map((step) => (
+          <span key={step}>{step}</span>
+        ))}
       </div>
       <div className="relative h-32 min-w-0" role="img" aria-label={summary}>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden>
+          {scaleStepValues.map((step) => (
+            <line
+              key={step}
+              x1="0"
+              y1={chartY(step)}
+              x2="100"
+              y2={chartY(step)}
+              className="stroke-line"
+              strokeWidth="0.35"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
           {paintOrder.map((kind) => {
             const row = rows.find((item) => item.kind === kind)
-            const d = curve(kind, slots[kind])
+            const d = curve(slots[kind])
             if (!row || !d) return null
             return (
               <path
@@ -135,7 +151,7 @@ export function WeekMarks({ checkIns }: { checkIns: CheckIn[] }) {
                   <span
                     key={kind}
                     className={`absolute left-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-current/20 sm:size-3.5 ${row.tone}`}
-                    style={{ top: `${markY(plotted(kind, value))}%` }}
+                    style={{ top: `${chartY(value)}%` }}
                   >
                     <span className="absolute left-1/2 top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-current sm:size-2" />
                   </span>

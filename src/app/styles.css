@@ -232,19 +232,19 @@ html.dark .anima-welcome-grain {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes anima-welcome-out {
+  @keyframes anima-welcome-scene-out {
     from {
       opacity: 1;
       transform: translateY(0) scale(1);
     }
     to {
       opacity: 0;
-      transform: translateY(-14px) scale(0.985);
+      transform: translateY(-10px) scale(0.992);
     }
   }
 
   .anima-welcome-scene-leaving {
-    animation: anima-welcome-out 0.34s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: anima-welcome-scene-out 0.38s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
 
   @keyframes anima-welcome-drift {

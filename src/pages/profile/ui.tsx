@@ -4,8 +4,8 @@ import { signOutUser, useUserStore } from '@/entities/user'
 import { InvitePanel, SharePanel } from './invite'
 import { LanguageSwitch } from '@/features/switch-language'
 import { ThemeSwitch } from '@/features/toggle-theme'
-import { countries, type Country } from '@/shared/config'
-import { Button, Card, ChoiceButton, ChoiceGroup, PageHeader } from '@/shared/ui'
+import { CountryPicker } from '@/features/pick-country'
+import { Button, Card, ChoiceButton, PageHeader } from '@/shared/ui'
 
 export function ProfilePage() {
   const { t } = useTranslation()
@@ -71,13 +71,7 @@ export function ProfilePage() {
           </div>
           <InvitePanel />
           <p className="mt-4 text-sm font-medium">{t('onboarding.countryTitle')}</p>
-          <ChoiceGroup>
-            {countries.map((item) => (
-              <ChoiceButton key={item} active={country === item} onClick={() => setCountry(item as Country)}>
-                {t(`country.${item}`)}
-              </ChoiceButton>
-            ))}
-          </ChoiceGroup>
+          <CountryPicker className="mt-2" country={country} onCountry={setCountry} />
         </Card>
         <Card>
           <h2 className="text-base font-medium">{t('invite.shareTitle')}</h2>

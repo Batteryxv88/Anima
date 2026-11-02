@@ -47,6 +47,7 @@ export function CrisisPage() {
         </Card>
         <Card>
           <h2 className="text-base font-medium">{t('crisis.lines')}</h2>
+          <p className="mt-1 text-sm text-muted">{t('crisis.linesFor', { country: t(`country.${country}`) })}</p>
           <ul className="mt-3 grid gap-2">
             {lines.map((line) => (
               <li key={line.nameKey}>

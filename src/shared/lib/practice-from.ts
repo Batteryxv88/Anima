@@ -1,4 +1,4 @@
-const lists = new Set(['/skills', '/homework', '/paths', '/today', '/crisis'])
+const lists = new Set(['/skills', '/homework', '/today', '/crisis'])
 
 export function practiceFrom(state: unknown) {
   const from =

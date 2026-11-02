@@ -7,7 +7,6 @@ import { HomeworkPage } from '@/pages/homework'
 import { JoinPage } from '@/pages/join'
 import { JournalPage } from '@/pages/journal'
 import { OnboardingPage } from '@/pages/onboarding'
-import { PathsPage } from '@/pages/paths'
 import { ProfilePage } from '@/pages/profile'
 import { SessionPage } from '@/pages/session'
 import { SkillPage } from '@/pages/skill'
@@ -56,7 +55,7 @@ export const router = createBrowserRouter([
       { path: '/session', element: <SessionPage /> },
       { path: '/profile', element: <ProfilePage /> },
       { path: '/crisis', element: <CrisisPage /> },
-      { path: '/paths', element: <PathsPage /> },
+      { path: '/paths', element: <Navigate to="/skills" replace /> },
       { path: '/join/:token', element: <JoinPage /> },
       { path: '/cabinet', element: <CabinetPage /> },
       { path: '/cabinet/:linkId', element: <CabinetPage /> },

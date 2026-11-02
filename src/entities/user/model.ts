@@ -26,6 +26,7 @@ type UserState = {
   country: Country
   mode: CareMode
   displayName: string
+  displayNameUid: string | null
   uid: string | null
   email: string | null
   role: StaffRole
@@ -79,6 +80,7 @@ export const useUserStore = create<UserState>()(
       country: 'si',
       mode: 'self',
       displayName: '',
+      displayNameUid: null,
       uid: null,
       email: null,
       role: 'user',
@@ -90,41 +92,55 @@ export const useUserStore = create<UserState>()(
       setLargeText: (largeText) => set({ largeText }),
       setCountry: (country) => set({ country }),
       setMode: (mode) => set({ mode }),
-      setDisplayName: (displayName) => set({ displayName: displayName.trim() }),
+      setDisplayName: (displayName) =>
+        set((state) => ({
+          displayName: displayName.trim(),
+          displayNameUid: state.uid,
+        })),
       setSession: (session) =>
-        set(
-          session
-            ? {
-                uid: session.uid,
-                email: session.email,
-                role: 'user',
-                displayName: '',
-                profileSynced: false,
-              }
-            : {
-                uid: null,
-                email: null,
-                role: 'user',
-                displayName: '',
-                profileSynced: false,
-              },
-        ),
+        set((state) => {
+          if (!session) {
+            return {
+              uid: null,
+              email: null,
+              role: 'user',
+              displayName: '',
+              displayNameUid: null,
+              profileSynced: false,
+            }
+          }
+          const keepName = session.uid === state.displayNameUid && Boolean(state.displayName.trim())
+          return {
+            uid: session.uid,
+            email: session.email,
+            role: 'user',
+            displayName: keepName ? state.displayName : '',
+            displayNameUid: keepName ? state.displayNameUid : null,
+            profileSynced: false,
+          }
+        }),
       setRole: (role) => set({ role }),
       setAuthReady: (authReady) => set({ authReady }),
       setProfileSynced: (profileSynced) => set({ profileSynced }),
       applyProfile: (data) =>
-        set((state) => ({
-          language: pickLocale(data.language, state.language),
-          theme: pickTheme(data.theme, state.theme),
-          largeText: typeof data.largeText === 'boolean' ? data.largeText : state.largeText,
-          country: pickCountry(data.country, state.country),
-          mode: pickMode(data.mode, state.mode),
-          displayName: typeof data.displayName === 'string' ? data.displayName : '',
-          onboardingComplete:
-            typeof data.onboardingComplete === 'boolean'
-              ? data.onboardingComplete
-              : state.onboardingComplete,
-        })),
+        set((state) => {
+          const fromCloud =
+            typeof data.displayName === 'string' ? data.displayName.trim() : ''
+          const displayName = fromCloud || state.displayName
+          return {
+            language: pickLocale(data.language, state.language),
+            theme: pickTheme(data.theme, state.theme),
+            largeText: typeof data.largeText === 'boolean' ? data.largeText : state.largeText,
+            country: pickCountry(data.country, state.country),
+            mode: pickMode(data.mode, state.mode),
+            displayName,
+            displayNameUid: displayName.trim() ? state.uid : null,
+            onboardingComplete:
+              typeof data.onboardingComplete === 'boolean'
+                ? data.onboardingComplete
+                : state.onboardingComplete,
+          }
+        }),
     }),
     {
       name: 'anima-user',
@@ -135,13 +151,10 @@ export const useUserStore = create<UserState>()(
         largeText: state.largeText,
         country: state.country,
         mode: state.mode,
+        displayName: state.displayName,
+        displayNameUid: state.displayNameUid,
       }),
-      merge: (persisted, current) => {
-        const saved = persisted as Partial<UserState> | undefined
-        if (!saved) return current
-        const { displayName: _drop, ...rest } = saved
-        return { ...current, ...rest, displayName: '' }
-      },
+      merge: (persisted, current) => ({ ...current, ...(persisted as Partial<UserState>) }),
     },
   ),
 )

@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useCareStore } from '@/entities/care'
-import { TechniqueFields, techniqueCopy, useTechniqueStore, type FieldAnswers } from '@/entities/technique'
+import {
+  TechniqueCover,
+  TechniqueFields,
+  techniqueCopy,
+  useTechniqueStore,
+  type FieldAnswers,
+} from '@/entities/technique'
 import { isStaffRole, useUserStore } from '@/entities/user'
 import { type Locale } from '@/shared/config'
 import { isThisWeek, practiceFrom } from '@/shared/lib'
@@ -62,6 +68,7 @@ export function SkillPage() {
           ) : null
         }
       />
+      <TechniqueCover coverUrl={technique.coverUrl} />
       <div className="grid gap-4">
         <Card>
           <p className="text-xs uppercase tracking-wide text-sand">{t(`school.${technique.school}`)}</p>

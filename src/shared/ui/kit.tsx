@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
-import { cn, parseMarkup, wrapMarkup } from '@/shared/lib'
+import { cn, parseMarkup, SCALE_MAX, SCALE_MIN, scaleStepValues, wrapMarkup } from '@/shared/lib'
 
 export function PageHeader({
   title,
@@ -227,8 +227,8 @@ export function Scale({
       </span>
       <input
         type="range"
-        min={0}
-        max={10}
+        min={SCALE_MIN}
+        max={SCALE_MAX}
         value={value}
         aria-valuetext={valueLabel}
         onChange={(event) => onChange(Number(event.target.value))}
@@ -239,6 +239,58 @@ export function Scale({
         <span>{maxLabel}</span>
       </span>
     </label>
+  )
+}
+
+export function ScaleTap({
+  label,
+  minLabel,
+  maxLabel,
+  valueLabel,
+  value,
+  onChange,
+}: {
+  label: string
+  minLabel: string
+  maxLabel: string
+  valueLabel: string
+  value: number
+  onChange: (value: number) => void
+}) {
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+        <span className="text-ink">{label}</span>
+        <span className="text-right font-medium text-sage-deep">{valueLabel}</span>
+      </div>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
+        {scaleStepValues.map((step) => {
+          const active = value === step
+          return (
+            <button
+              key={step}
+              type="button"
+              aria-pressed={active}
+              aria-label={active ? `${step}, ${valueLabel}` : String(step)}
+              onClick={() => onChange(step)}
+              className={cn(
+                'flex min-h-10 min-w-10 items-center justify-center rounded-full border text-sm tabular-nums transition-colors duration-150',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/60',
+                active
+                  ? 'border-sage bg-sage text-white'
+                  : 'border-line bg-card text-ink hover:border-sage/40',
+              )}
+            >
+              {step}
+            </button>
+          )
+        })}
+      </div>
+      <span className="mt-1.5 flex justify-between text-xs text-muted">
+        <span>{minLabel}</span>
+        <span>{maxLabel}</span>
+      </span>
+    </div>
   )
 }
 

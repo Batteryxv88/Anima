@@ -1,1 +1,7 @@
-export { getFirebaseApp, getFirebaseAuth, getFirebaseDb, isFirebaseConfigured } from './app'
+export {
+  getFirebaseApp,
+  getFirebaseAuth,
+  getFirebaseDb,
+  getFirebaseStorage,
+  isFirebaseConfigured,
+} from './app'

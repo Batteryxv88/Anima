@@ -1,17 +1,27 @@
-import { useState, type AnimationEvent, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useUserStore } from '@/entities/user'
 import { WelcomeLanguageSwitch } from '@/features/switch-language'
 import { ThemeSwitch } from '@/features/toggle-theme'
-import { APP_NAME, careModes, countries, type CareMode, type Country } from '@/shared/config'
+import { CountryPicker } from '@/features/pick-country'
+import { APP_NAME, careModes, type CareMode } from '@/shared/config'
 import { cn, takeNext } from '@/shared/lib'
 import { Button, Card, ChoiceButton, ChoiceGroup } from '@/shared/ui'
 
 const welcomeBeads: { className: string; style: CSSProperties }[] = [
-  { className: 'bg-sage anima-welcome-bead', style: { top: '6%', left: '2%', animationDelay: '0s' } },
-  { className: 'bg-ink anima-welcome-bead', style: { top: '14%', right: '0%', animationDelay: '2.5s' } },
-  { className: 'bg-sand anima-welcome-bead', style: { bottom: '10%', left: '10%', animationDelay: '5s' } },
+  {
+    className: 'bg-sage anima-welcome-bead',
+    style: { top: '6%', left: '2%', animationDelay: '0s' },
+  },
+  {
+    className: 'bg-ink anima-welcome-bead',
+    style: { top: '14%', right: '0%', animationDelay: '2.5s' },
+  },
+  {
+    className: 'bg-sand anima-welcome-bead',
+    style: { bottom: '10%', left: '10%', animationDelay: '5s' },
+  },
 ]
 
 function WelcomeHorizon() {
@@ -116,24 +126,22 @@ function WelcomeNextButton({ leaving, onClick }: { leaving: boolean; onClick: ()
 function WelcomeScene({ language, onDone }: { language: string; onDone: () => void }) {
   const [leaving, setLeaving] = useState(false)
 
-  const finishWelcome = () => {
-    onDone()
-  }
+  useEffect(() => {
+    if (!leaving) return
+    const timer = window.setTimeout(() => {
+      onDone()
+    }, 380)
+    return () => window.clearTimeout(timer)
+  }, [leaving, onDone])
 
   const handleNext = () => {
     if (leaving) return
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduceMotion) {
-      finishWelcome()
+      onDone()
       return
     }
     setLeaving(true)
-  }
-
-  const handleLeaveAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
-    if (!leaving || event.target !== event.currentTarget) return
-    if (event.animationName !== 'anima-welcome-out' && event.animationName !== 'anima-fade-out') return
-    finishWelcome()
   }
 
   return (
@@ -142,14 +150,13 @@ function WelcomeScene({ language, onDone }: { language: string; onDone: () => vo
         'anima-welcome-scene relative flex h-dvh flex-col overflow-hidden',
         leaving && 'anima-welcome-scene-leaving',
       )}
-      onAnimationEnd={handleLeaveAnimationEnd}
     >
       <div className="anima-welcome-bg pointer-events-none absolute inset-0" aria-hidden="true" />
       <div className="anima-welcome-grain pointer-events-none absolute inset-0" aria-hidden="true" />
       <WelcomeHorizon />
 
       <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col px-4 pt-3 sm:px-6 sm:pt-5">
-        <div className="shrink-0">
+        <div className="relative z-10 shrink-0">
           <WelcomeHero />
         </div>
         <div className="anima-welcome-scroll mt-4 min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-2 sm:mt-6">
@@ -183,7 +190,7 @@ export function OnboardingPage() {
     },
     {
       title: t('onboarding.pathTitle'),
-      text: t('onboarding.countryText'),
+      text: t('onboarding.pathText'),
       body: (
         <div className="grid gap-6">
           <ChoiceGroup>
@@ -195,13 +202,7 @@ export function OnboardingPage() {
           </ChoiceGroup>
           <div>
             <p className="mb-2 text-sm font-medium">{t('onboarding.countryTitle')}</p>
-            <ChoiceGroup>
-              {countries.map((item) => (
-                <ChoiceButton key={item} active={country === item} onClick={() => setCountry(item as Country)}>
-                  {t(`country.${item}`)}
-                </ChoiceButton>
-              ))}
-            </ChoiceGroup>
+            <CountryPicker country={country} onCountry={setCountry} />
           </div>
         </div>
       ),

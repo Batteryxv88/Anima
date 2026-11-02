@@ -1,0 +1,27 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isFounder() {
+      return signedIn() && request.auth.token.email == 'waterviewme@gmail.com';
+    }
+    function isAdmin() {
+      return isFounder() || (
+        signedIn()
+        && firestore.exists(/databases/(default)/documents/roles/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/roles/$(request.auth.uid)).data.role in ['admin', 'superadmin']
+      );
+    }
+
+    match /techniques/{techniqueId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin()
+        && fileName.matches('cover\\.(webp|png|jpg|jpeg)')
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if isAdmin();
+    }
+  }
+}

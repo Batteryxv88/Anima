@@ -13,6 +13,7 @@ export {
   PageHeader,
   RichText,
   Scale,
+  ScaleTap,
   SearchSelect,
   TextArea,
   TextField,

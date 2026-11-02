@@ -12,6 +12,7 @@ import {
   saveTechnique,
   schools,
   situations,
+  TechniqueCover,
   useTechniqueStore,
   type FieldKind,
   type School,
@@ -38,6 +39,7 @@ export function StaffTechniquePage() {
   useEffect(() => {
     setDraft(start)
   }, [start])
+
   if (!authReady) return null
   if (!isStaffRole(role)) return <Navigate to="/skills" replace />
   const copy = draft.copy.ru
@@ -65,6 +67,25 @@ export function StaffTechniquePage() {
               onChange={(event) => setDraft((current) => ({ ...current, durationMin: Number(event.target.value) || 1 }))}
             />
           </Field>
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">{t('staff.cover')}</p>
+            {draft.coverUrl?.trim() ? (
+              <TechniqueCover coverUrl={draft.coverUrl} className="mb-0" />
+            ) : null}
+            <p className="text-sm text-muted">{t('staff.coverUrlHint')}</p>
+            <Field label={t('staff.coverUrl')}>
+              <TextField
+                value={draft.coverUrl ?? ''}
+                placeholder="https://…"
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    coverUrl: event.target.value.trim() || undefined,
+                  }))
+                }
+              />
+            </Field>
+          </div>
           <p className="text-sm text-muted">{t('staff.school')}</p>
           <div className="flex flex-wrap gap-2">
             {schools.map((item) => (
@@ -225,10 +246,11 @@ export function StaffTechniquePage() {
               setBusy(true)
               void saveTechnique(fallbackLocales(next))
                 .then((savedId) => {
-                  void fillTranslations({ ...next, id: savedId })
+                  const saved = { ...next, id: savedId }
+                  void fillTranslations(saved)
                     .then((item) => saveTechnique(item))
                     .catch(() => undefined)
-                  navigate(id && id !== 'new' ? `/skills/${id}` : '/skills', { replace: true, state: { saved: true } })
+                  navigate(`/skills/${savedId}`, { replace: true, state: { saved: true } })
                 })
                 .catch(() => setError(t('staff.failed')))
                 .finally(() => setBusy(false))

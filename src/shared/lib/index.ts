@@ -3,7 +3,16 @@ export { isCloudLocked, withCloudLock } from './cloud-lock'
 export { formatDay, formatStamp, isThisWeek, startOfWeek, todayId, weekDates, weekRangeLabel } from './dates'
 export { createId } from './id'
 export { rememberNext, takeNext } from './next-path'
-export { scaleWordKey, type ScaleKind } from './scales'
+export {
+  SCALE_DEFAULT,
+  SCALE_MAX,
+  SCALE_MIN,
+  normalizeScaleValue,
+  scalePlotNorm,
+  scaleStepValues,
+  scaleWordKey,
+  type ScaleKind,
+} from './scales'
 export { translateFromRu } from './translate'
 export { parseMarkup, wrapMarkup, type MarkupPart } from './markup'
 export { practiceFrom } from './practice-from'
