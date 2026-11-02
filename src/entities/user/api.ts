@@ -11,6 +11,7 @@ import {
 import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
 import { getFirebaseAuth, getFirebaseDb } from '@/shared/firebase'
 import { FOUNDER_EMAIL, type StaffRole } from '@/shared/config'
+import { useCareStore } from '@/entities/care/model'
 import { withCloudLock } from '@/shared/lib'
 import { pickRole, useUserStore } from './model'
 
@@ -49,14 +50,27 @@ export async function signUpEmail(email: string, password: string) {
   await createUserWithEmailAndPassword(auth, email, password)
 }
 
+function prefersGoogleRedirect() {
+  if (typeof window === 'undefined') return false
+  const standalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  const coarseMobile = window.matchMedia('(pointer: coarse)').matches
+  return standalone || coarseMobile
+}
+
 export async function signInGoogle() {
   const auth = getFirebaseAuth()
   if (!auth) throw new Error('auth.noFirebase')
+  if (prefersGoogleRedirect()) {
+    await signInWithRedirect(auth, googleProvider)
+    return
+  }
   try {
     await signInWithPopup(auth, googleProvider)
   } catch (error) {
     const code = errorCode(error)
-    if (code === 'auth/popup-blocked' || code === 'auth/cancelled-popup-request') {
+    if (code === 'auth/popup-blocked') {
       await signInWithRedirect(auth, googleProvider)
       return
     }
@@ -67,6 +81,7 @@ export async function signInGoogle() {
 export async function signOutUser() {
   const auth = getFirebaseAuth()
   if (auth) await signOut(auth)
+  useCareStore.getState().clearSkillPrefs()
   useUserStore.getState().setSession(null)
 }
 

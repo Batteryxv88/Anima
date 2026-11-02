@@ -5,6 +5,7 @@ import { InvitePanel, SharePanel } from './invite'
 import { LanguageSwitch } from '@/features/switch-language'
 import { ThemeSwitch } from '@/features/toggle-theme'
 import { CountryPicker } from '@/features/pick-country'
+import { rememberNext } from '@/shared/lib'
 import { Button, Card, ChoiceButton, PageHeader } from '@/shared/ui'
 
 export function ProfilePage() {
@@ -42,6 +43,7 @@ export function ProfilePage() {
               <p className="text-sm leading-relaxed text-muted">{t('auth.guest')}</p>
               <Link
                 to="/auth"
+                onClick={() => rememberNext('/profile')}
                 className="inline-flex min-h-11 items-center justify-center rounded-xl bg-sage px-4 text-sm font-medium text-white"
               >
                 {t('auth.signIn')}

@@ -1,10 +1,10 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { authErrorKey, signInEmail, signInGoogle, signUpEmail, useUserStore } from '@/entities/user'
 import { APP_NAME } from '@/shared/config'
 import { isFirebaseConfigured } from '@/shared/firebase'
-import { takeNext } from '@/shared/lib'
+import { clearNext, peekNext } from '@/shared/lib'
 import { Button, Card, Chip, Field, TextField } from '@/shared/ui'
 
 export function AuthPage() {
@@ -17,9 +17,13 @@ export function AuthPage() {
   const [error, setError] = useState('')
   const [pending, setPending] = useState(false)
   const ready = isFirebaseConfigured()
-  const nextRef = useRef(takeNext('/profile'))
+  const returnPath = useMemo(() => peekNext('/profile'), [])
 
-  if (uid) return <Navigate to={nextRef.current} replace />
+  useEffect(() => {
+    if (uid) clearNext()
+  }, [uid])
+
+  if (uid) return <Navigate to={returnPath} replace />
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -28,7 +32,7 @@ export function AuthPage() {
     try {
       if (mode === 'up') await signUpEmail(email.trim(), password)
       else await signInEmail(email.trim(), password)
-      navigate(nextRef.current, { replace: true })
+      navigate(returnPath, { replace: true })
     } catch (caught) {
       const key =
         caught instanceof Error && caught.message === 'auth.noFirebase'
@@ -42,11 +46,14 @@ export function AuthPage() {
 
   async function google() {
     setError('')
+    setPending(true)
     try {
       await signInGoogle()
-      navigate(nextRef.current, { replace: true })
+      navigate(returnPath, { replace: true })
     } catch (caught) {
       setError(t(authErrorKey(caught)))
+    } finally {
+      setPending(false)
     }
   }
 
@@ -56,6 +63,9 @@ export function AuthPage() {
       <Card>
         <h1 className="text-2xl font-medium">{t(mode === 'up' ? 'auth.signUpTitle' : 'auth.signInTitle')}</h1>
         <p className="mt-3 text-sm leading-relaxed text-muted">{t('auth.lead')}</p>
+        {sessionStorage.getItem('anima-next') ? (
+          <p className="mt-2 text-sm leading-relaxed text-muted">{t('auth.returnHint')}</p>
+        ) : null}
         {typeof window !== 'undefined' && window.location.hostname === '127.0.0.1' ? (
           <p className="mt-3 text-sm leading-relaxed text-terra">
             {t('auth.useLocalhost')}{' '}

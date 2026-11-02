@@ -79,6 +79,7 @@ type CareState = CareSnapshot & {
   setCrisisPlan: (crisisPlan: CrisisPlan) => void
   setSkillLike: (techniqueId: string, liked: boolean) => void
   setSkillRating: (techniqueId: string, rating: number | undefined) => void
+  clearSkillPrefs: () => void
   replaceCare: (payload: CareSnapshot) => void
 }
 
@@ -200,6 +201,7 @@ export const useCareStore = create<CareState>()(
           }
           return { skillPrefs: { ...state.skillPrefs, [techniqueId]: next } }
         }),
+      clearSkillPrefs: () => set({ skillPrefs: {} }),
       replaceCare: (payload) => set({ ...payload, skillPrefs: payload.skillPrefs ?? {} }),
     }),
     { name: 'anima-care' },

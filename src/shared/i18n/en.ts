@@ -276,6 +276,7 @@ export const en = {
   auth: {
     account: 'Account',
     lead: 'So you can open Anima on another device and later link a specialist.',
+    returnHint: 'After sign-in we’ll take you back to where you were.',
     signIn: 'Sign in',
     signUp: 'Create account',
     signInTitle: 'Sign in',

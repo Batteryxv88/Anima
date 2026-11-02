@@ -1,12 +1,26 @@
 import { Heart, Star } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { setSkillLike, setSkillRating } from '@/entities/care'
 import { useCareStore } from '@/entities/care/model'
-import { cn } from '@/shared/lib'
+import { useUserStore } from '@/entities/user'
+import { cn, rememberAuthReturn } from '@/shared/lib'
 import { averageRating, backfillSkillRatingStat, useTechniqueStatsStore } from './stats'
 
 const starSteps = [1, 2, 3, 4, 5] as const
+
+function useRequireSignIn() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const uid = useUserStore((state) => state.uid)
+  return useCallback(() => {
+    if (uid) return true
+    rememberAuthReturn(`${location.pathname}${location.search}`)
+    navigate('/auth')
+    return false
+  }, [location.pathname, location.search, navigate, uid])
+}
 
 export function SkillAverageRating({
   techniqueId,
@@ -57,7 +71,11 @@ export function SkillLikeButton({
   ghost?: boolean
 }) {
   const { t } = useTranslation()
-  const liked = useCareStore((state) => Boolean(state.skillPrefs[techniqueId]?.liked))
+  const uid = useUserStore((state) => state.uid)
+  const requireSignIn = useRequireSignIn()
+  const liked = useCareStore((state) =>
+    uid ? Boolean(state.skillPrefs[techniqueId]?.liked) : false,
+  )
 
   return (
     <button
@@ -82,6 +100,7 @@ export function SkillLikeButton({
       onClick={(event) => {
         event.preventDefault()
         event.stopPropagation()
+        if (!requireSignIn()) return
         setSkillLike(techniqueId, !liked)
       }}
     >
@@ -96,14 +115,16 @@ export function SkillLikeButton({
 
 export function SkillStarRating({ techniqueId }: { techniqueId: string }) {
   const { t } = useTranslation()
-  const rating = useCareStore((state) => state.skillPrefs[techniqueId]?.rating)
+  const uid = useUserStore((state) => state.uid)
+  const requireSignIn = useRequireSignIn()
+  const rating = useCareStore((state) => (uid ? state.skillPrefs[techniqueId]?.rating : undefined))
   const hasRating = rating != null && rating >= 1 && rating <= 5
   const [animTick, setAnimTick] = useState(0)
 
   useEffect(() => {
-    if (rating == null) return
+    if (!uid || rating == null) return
     void backfillSkillRatingStat(techniqueId, rating)
-  }, [techniqueId, rating])
+  }, [techniqueId, rating, uid])
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -128,7 +149,10 @@ export function SkillStarRating({ techniqueId }: { techniqueId: string }) {
                 filled ? 'text-sage' : 'text-muted hover:text-sage/80',
               )}
               onClick={() => {
-                void setSkillRating(techniqueId, step).then(() => setAnimTick((value) => value + 1))
+                if (!requireSignIn()) return
+                void setSkillRating(techniqueId, step).then((ok) => {
+                  if (ok) setAnimTick((value) => value + 1)
+                })
               }}
             >
               <Star size={15} strokeWidth={1.75} fill={filled ? 'currentColor' : 'none'} />

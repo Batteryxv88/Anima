@@ -276,6 +276,7 @@ export const sl = {
   auth: {
     account: 'Račun',
     lead: 'Da lahko Anima odprete na drugi napravi in pozneje povežete strokovnjaka.',
+    returnHint: 'Po prijavi vas vrnemo na stran, kjer ste bili.',
     signIn: 'Prijava',
     signUp: 'Ustvari račun',
     signInTitle: 'Prijava',
