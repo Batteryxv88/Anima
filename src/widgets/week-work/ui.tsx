@@ -48,12 +48,12 @@ function Fold({ open, children }: { open: boolean; children: ReactNode }) {
 function Mark({ done }: { done: boolean }) {
   if (done) {
     return (
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-sage/15 text-sage-deep">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-sage/15 text-sage">
         <Check size={14} strokeWidth={2.25} />
       </span>
     )
   }
-  return <span className="size-6 shrink-0 rounded-full border-2 border-sand/80" />
+  return <span className="size-6 shrink-0 rounded-full border-2 border-gold/50" />
 }
 
 function PracticeBody({ practice, showDate = true }: { practice: Practice; showDate?: boolean }) {

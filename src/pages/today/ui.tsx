@@ -6,6 +6,7 @@ import { localeTags, type Locale } from '@/shared/config'
 import { formatDay, normalizeScaleValue, SCALE_DEFAULT, scaleWordKey, todayId } from '@/shared/lib'
 import { Button, Card, NoticeLayer, PageHeader, ScaleTap, useNotice } from '@/shared/ui'
 import { HomeworkBlock } from '@/widgets/homework-block'
+import { TodayForYouCard, TodayHubGreeting, TodayQuickTiles } from '@/widgets/today-hub'
 
 export function TodayPage() {
   const { t, i18n } = useTranslation()
@@ -21,15 +22,20 @@ export function TodayPage() {
   return (
     <>
       <NoticeLayer notice={notice} onClose={hide} />
-      <PageHeader title={t('today.title')} text={formatDay(todayId(), localeTags[locale])} />
+      <div className="hidden lg:block">
+        <PageHeader title={t('today.title')} text={formatDay(todayId(), localeTags[locale])} />
+      </div>
+      <TodayHubGreeting dateLabel={formatDay(todayId(), localeTags[locale])} />
+      <TodayForYouCard />
+      <TodayQuickTiles className="mb-4" />
       <div className="grid gap-4">
         {isSpecialist ? (
-          <Link to="/cabinet" className="rounded-2xl border border-sage/40 bg-sage/10 px-5 py-4">
-            <p className="text-sm font-medium text-sage-deep">{t('invite.asSpecialist')}</p>
+          <Link to="/cabinet" className="rounded-2xl border border-plum/35 bg-plum/10 px-5 py-4">
+            <p className="text-sm font-medium text-plum">{t('invite.asSpecialist')}</p>
             <p className="mt-1 text-sm text-muted">{t('cabinet.open')}</p>
           </Link>
         ) : null}
-        <Card>
+        <Card className="anima-sunset-gradient border-peach/25">
           <h2 className="text-base font-medium text-ink">{t('today.checkIn')}</h2>
           <div className="mt-4 grid gap-4">
             <ScaleTap
@@ -38,6 +44,7 @@ export function TodayPage() {
               maxLabel={t('scale.mood.max')}
               valueLabel={t(scaleWordKey('mood', mood))}
               value={mood}
+              accent="coral"
               onChange={setMood}
             />
             <ScaleTap
@@ -46,6 +53,7 @@ export function TodayPage() {
               maxLabel={t('scale.anxiety.max')}
               valueLabel={t(scaleWordKey('anxiety', anxiety))}
               value={anxiety}
+              accent="plum"
               onChange={setAnxiety}
             />
             <ScaleTap
@@ -54,6 +62,7 @@ export function TodayPage() {
               maxLabel={t('scale.sleep.max')}
               valueLabel={t(scaleWordKey('sleep', sleep))}
               value={sleep}
+              accent="lavender"
               onChange={setSleep}
             />
           </div>
@@ -75,11 +84,11 @@ export function TodayPage() {
           <h2 className="mb-3 text-base font-medium">{t('today.weekTitle')}</h2>
           <HomeworkBlock />
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Link to="/journal" className="rounded-2xl border border-line bg-card px-5 py-4 text-sm text-sage-deep">
+        <div className="hidden gap-3 sm:grid-cols-2 lg:grid">
+          <Link to="/journal" className="rounded-2xl border border-lavender/40 bg-lavender/10 px-5 py-4 text-sm text-plum">
             {t('journal.open')}
           </Link>
-          <Link to="/session" className="rounded-2xl border border-line bg-card px-5 py-4 text-sm text-sage-deep">
+          <Link to="/session" className="rounded-2xl border border-gold/35 bg-gold/10 px-5 py-4 text-sm text-plum">
             {t('today.toSession')}
           </Link>
         </div>

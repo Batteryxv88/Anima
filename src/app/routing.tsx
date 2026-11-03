@@ -11,7 +11,16 @@ import { ProfilePage } from '@/pages/profile'
 import { SessionPage } from '@/pages/session'
 import { SkillPage } from '@/pages/skill'
 import { SkillsPage } from '@/pages/skills'
-import { StaffHome, StaffLayout, StaffRolesPage, StaffTechniquePage } from '@/pages/staff'
+import {
+  StaffForYouArticlePage,
+  StaffForYouGroupPage,
+  StaffForYouHomePage,
+  StaffHome,
+  StaffLayout,
+  StaffRolesPage,
+  StaffTechniquePage,
+} from '@/pages/staff'
+import { ForYouArticlePage } from '@/pages/for-you/ui'
 import { TodayPage } from '@/pages/today'
 import { AppShell } from '@/widgets/app-shell'
 
@@ -46,6 +55,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <Navigate to="/today" replace /> },
       { path: '/today', element: <TodayPage /> },
+      { path: '/today/for-you/:id', element: <ForYouArticlePage /> },
       { path: '/skills', element: <SkillsPage /> },
       { path: '/skills/new', element: <StaffTechniquePage /> },
       { path: '/skills/:id/edit', element: <StaffTechniquePage /> },
@@ -68,6 +78,9 @@ export const router = createBrowserRouter([
           { path: 'techniques', element: <Navigate to="/skills" replace /> },
           { path: 'techniques/new', element: <Navigate to="/skills/new" replace /> },
           { path: 'techniques/:id', element: <LegacyTechniqueEdit /> },
+          { path: 'for-you', element: <StaffForYouHomePage /> },
+          { path: 'for-you/:groupId', element: <StaffForYouGroupPage /> },
+          { path: 'for-you/:groupId/:articleId', element: <StaffForYouArticlePage /> },
         ],
       },
     ],

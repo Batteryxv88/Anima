@@ -104,8 +104,6 @@ export const useUserStore = create<UserState>()(
               uid: null,
               email: null,
               role: 'user',
-              displayName: '',
-              displayNameUid: null,
               profileSynced: false,
             }
           }
@@ -126,7 +124,7 @@ export const useUserStore = create<UserState>()(
         set((state) => {
           const fromCloud =
             typeof data.displayName === 'string' ? data.displayName.trim() : ''
-          const displayName = fromCloud || state.displayName
+          const displayName = fromCloud || (state.displayNameUid === state.uid ? state.displayName.trim() : '')
           return {
             language: pickLocale(data.language, state.language),
             theme: pickTheme(data.theme, state.theme),

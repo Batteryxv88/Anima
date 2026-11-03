@@ -17,3 +17,4 @@ export {
 export { translateFromRu } from './translate'
 export { parseMarkup, wrapMarkup, type MarkupPart } from './markup'
 export { practiceFrom } from './practice-from'
+export { firestoreErrorKey } from './firestore-error'

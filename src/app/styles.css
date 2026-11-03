@@ -6,28 +6,42 @@
 
 @theme {
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
-  --color-canvas: #f6f1ea;
-  --color-card: #fffaf5;
-  --color-ink: #2b2926;
-  --color-muted: #6e6962;
-  --color-line: #e6dfd4;
-  --color-sage: #4e7a68;
-  --color-sage-deep: #3e6354;
-  --color-sand: #c4a574;
-  --color-terra: #a85a4a;
+  --color-canvas: #fff7f1;
+  --color-card: #fffcf9;
+  --color-ink: #302b35;
+  --color-muted: #6b636f;
+  --color-line: #e9dcd8;
+  --color-plum: #80627d;
+  --color-plum-deep: #6a5168;
+  --color-coral: #d98978;
+  --color-peach: #f3c6a8;
+  --color-gold: #d9a96c;
+  --color-sage: #8fa69a;
+  --color-sage-deep: #758a81;
+  --color-lavender: #c5b4d6;
+  --color-sky: #a7c7e7;
+  --color-sand: #d9a96c;
+  --color-terra: #b87a6e;
 }
 
 @layer base {
   html.dark {
-    --color-canvas: #1b1a18;
-    --color-card: #262421;
-    --color-ink: #f1ebe3;
-    --color-muted: #b4ada4;
-    --color-line: #3a3632;
-    --color-sage: #86b09a;
-    --color-sage-deep: #a4c6b3;
-    --color-sand: #d4bc8f;
-    --color-terra: #d08a7c;
+    --color-canvas: #211f2a;
+    --color-card: #2d2935;
+    --color-ink: #f7eef0;
+    --color-muted: #b8afb8;
+    --color-line: #49404d;
+    --color-plum: #c5a0be;
+    --color-plum-deep: #d4b8ce;
+    --color-coral: #e99a89;
+    --color-peach: #e8b894;
+    --color-gold: #e4bd7b;
+    --color-sage: #a9c0ae;
+    --color-sage-deep: #bdd0c1;
+    --color-lavender: #b8a5d5;
+    --color-sky: #8fb0d9;
+    --color-sand: #e4bd7b;
+    --color-terra: #d98978;
   }
 
   html {
@@ -182,15 +196,39 @@
 .anima-welcome-bg {
   background:
     radial-gradient(
-      ellipse 90% 70% at 15% 8%,
-      color-mix(in srgb, var(--color-sage) 14%, transparent),
-      transparent 58%
+      ellipse 90% 70% at 12% 6%,
+      color-mix(in srgb, var(--color-peach) 28%, transparent),
+      transparent 55%
     ),
     radial-gradient(
-      ellipse 85% 65% at 88% 92%,
-      color-mix(in srgb, var(--color-sand) 12%, transparent),
+      ellipse 80% 60% at 88% 18%,
+      color-mix(in srgb, var(--color-coral) 16%, transparent),
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 85% 65% at 50% 100%,
+      color-mix(in srgb, var(--color-lavender) 22%, transparent),
       transparent 52%
     );
+}
+
+.anima-shell-bg {
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 50% -20%,
+      color-mix(in srgb, var(--color-peach) 12%, transparent),
+      transparent 55%
+    ),
+    var(--color-canvas);
+}
+
+.anima-sunset-gradient {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-peach) 35%, var(--color-card)),
+    color-mix(in srgb, var(--color-coral) 12%, var(--color-card)),
+    color-mix(in srgb, var(--color-lavender) 18%, var(--color-card))
+  );
 }
 
 .anima-welcome-grain {
@@ -205,7 +243,7 @@ html.dark .anima-welcome-grain {
 }
 
 .anima-welcome-horizon {
-  color: var(--color-sage);
+  color: var(--color-coral);
 }
 
 .anima-welcome-scroll {

@@ -1,5 +1,12 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app'
-import { getAuth, type Auth } from 'firebase/auth'
+import {
+  browserLocalPersistence,
+  browserPopupRedirectResolver,
+  getAuth,
+  indexedDBLocalPersistence,
+  initializeAuth,
+  type Auth,
+} from 'firebase/auth'
 import { getFirestore, type Firestore } from 'firebase/firestore'
 import { getStorage, type FirebaseStorage } from 'firebase/storage'
 
@@ -30,7 +37,16 @@ export function getFirebaseApp() {
 export function getFirebaseAuth() {
   const instance = getFirebaseApp()
   if (!instance) return null
-  if (!auth) auth = getAuth(instance)
+  if (!auth) {
+    try {
+      auth = initializeAuth(instance, {
+        persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+        popupRedirectResolver: browserPopupRedirectResolver,
+      })
+    } catch {
+      auth = getAuth(instance)
+    }
+  }
   return auth
 }
 

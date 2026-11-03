@@ -10,9 +10,9 @@ import {
 } from '@/shared/lib'
 
 const rows: { kind: ScaleKind; label: string; tone: string; bead: string }[] = [
-  { kind: 'mood', label: 'today.mood', tone: 'text-sage', bead: 'bg-sage' },
-  { kind: 'anxiety', label: 'today.anxiety', tone: 'text-ink', bead: 'bg-ink' },
-  { kind: 'sleep', label: 'today.sleep', tone: 'text-sand', bead: 'bg-sand' },
+  { kind: 'mood', label: 'today.mood', tone: 'text-coral', bead: 'bg-coral' },
+  { kind: 'anxiety', label: 'today.anxiety', tone: 'text-plum', bead: 'bg-plum' },
+  { kind: 'sleep', label: 'today.sleep', tone: 'text-lavender', bead: 'bg-lavender' },
 ]
 
 const paintOrder: ScaleKind[] = ['sleep', 'anxiety', 'mood']

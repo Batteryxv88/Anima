@@ -95,7 +95,7 @@ export function JoinPage() {
             </Button>
           </div>
         )}
-        <Link to="/profile" className="mt-4 inline-flex min-h-11 items-center text-sm text-sage-deep">
+        <Link to="/profile" className="mt-4 inline-flex min-h-11 items-center text-sm text-plum">
           {t('nav.back')}
         </Link>
       </Card>

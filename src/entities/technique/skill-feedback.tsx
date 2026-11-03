@@ -84,16 +84,16 @@ export function SkillLikeButton({
       aria-label={liked ? t('skills.unlike') : t('skills.like')}
       className={cn(
         'inline-flex shrink-0 items-center justify-center transition-colors duration-150',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/60',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/50',
         ghost
           ? cn(
-              'min-h-8 min-w-8 rounded-lg text-muted hover:bg-line/60 hover:text-sage-deep',
-              liked && 'text-sage-deep',
+              'min-h-8 min-w-8 rounded-lg text-muted hover:bg-line/60 hover:text-coral',
+              liked && 'text-coral',
             )
           : cn(
               'rounded-xl border',
               compact ? 'min-h-9 min-w-9' : 'min-h-11 min-w-11',
-              liked ? 'border-sage/50 bg-sage/10 text-sage-deep' : 'border-line bg-card text-muted hover:border-sage/40',
+              liked ? 'border-coral/45 bg-coral/12 text-coral' : 'border-line bg-card text-muted hover:border-plum/35',
             ),
         className,
       )}
@@ -145,8 +145,8 @@ export function SkillStarRating({ techniqueId }: { techniqueId: string }) {
               aria-pressed={selected}
               className={cn(
                 'inline-flex min-h-7 min-w-7 items-center justify-center rounded-md transition-colors duration-150',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/60',
-                filled ? 'text-sage' : 'text-muted hover:text-sage/80',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/50',
+                filled ? 'text-gold' : 'text-muted hover:text-gold/80',
               )}
               onClick={() => {
                 if (!requireSignIn()) return

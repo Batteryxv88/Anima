@@ -22,6 +22,12 @@ const icons = {
   homework: NotebookPen,
   session: CalendarCheck,
   cabinet: ClipboardList,
+  profile: CircleUserRound,
+}
+
+function mobileNavLabel(to: string, key: string, t: (key: string) => string) {
+  if (to === '/today') return t('nav.home')
+  return t(key)
 }
 
 export function AppShell() {
@@ -33,7 +39,6 @@ export function AppShell() {
   const authReady = useUserStore((state) => state.authReady)
   const profileSynced = useUserStore((state) => state.profileSynced)
   const displayName = useUserStore((state) => state.displayName)
-  const profileLabel = uid && displayName.trim() ? displayName.trim() : ''
   const needName =
     authReady &&
     profileSynced &&
@@ -47,6 +52,7 @@ export function AppShell() {
   const cabinetPerson = /\/cabinet\/.+/.test(location.pathname)
   const nested =
     location.pathname.startsWith('/skills/') ||
+    location.pathname.startsWith('/today/for-you/') ||
     location.pathname === '/journal' ||
     location.pathname.startsWith('/join/') ||
     location.pathname.startsWith('/staff') ||
@@ -58,9 +64,11 @@ export function AppShell() {
     ? location.pathname === '/skills/new'
       ? '/skills'
       : location.pathname.replace(/\/edit$/, '')
-    : location.pathname.startsWith('/skills/')
-      ? practiceFrom(location.state)
-      : cabinetPerson
+    : location.pathname.startsWith('/today/for-you/')
+      ? '/today'
+      : location.pathname.startsWith('/skills/')
+        ? practiceFrom(location.state)
+        : cabinetPerson
         ? '/cabinet'
         : location.pathname.startsWith('/staff') ||
             location.pathname.startsWith('/cabinet') ||
@@ -69,15 +77,15 @@ export function AppShell() {
           : '/today'
 
   return (
-    <div className="min-h-dvh bg-canvas text-ink">
+    <div className="anima-shell-bg min-h-dvh text-ink">
       <NoticeLayer notice={returned.notice} onClose={returned.hide} />
       <NoticeLayer notice={nameNotice.notice} onClose={nameNotice.hide} />
-      <aside className="fixed inset-y-0 left-0 hidden w-56 border-r border-line bg-card/80 p-4 md:flex md:flex-col">
+      <aside className="fixed inset-y-0 left-0 hidden w-56 border-r border-line bg-card/80 p-4 lg:flex lg:flex-col">
         <Link to="/today" className="block px-2 pb-6 text-lg font-medium tracking-tight text-ink">
           {APP_NAME}
         </Link>
         {isSpecialist ? (
-          <p className="mb-4 px-2 text-xs leading-relaxed text-sage-deep">{t('invite.asSpecialist')}</p>
+          <p className="mb-4 px-2 text-xs leading-relaxed text-plum">{t('invite.asSpecialist')}</p>
         ) : null}
         <nav className="grid gap-1">
           {items.map((item) => {
@@ -89,7 +97,7 @@ export function AppShell() {
                 className={({ isActive }) =>
                   cn(
                     'flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm',
-                    isActive ? 'bg-sage/15 text-sage-deep' : 'text-muted hover:bg-canvas hover:text-ink',
+                    isActive ? 'bg-plum/12 text-plum' : 'text-muted hover:bg-canvas hover:text-ink',
                   )
                 }
               >
@@ -108,15 +116,15 @@ export function AppShell() {
         </Link>
       </aside>
 
-      <div className="md:pl-56">
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-line bg-canvas/90 px-4 backdrop-blur-sm print:hidden">
+      <div className="lg:pl-56">
+        <header className="sticky top-0 z-10 hidden h-14 items-center justify-between gap-3 border-b border-line bg-canvas/90 px-4 backdrop-blur-sm lg:flex print:hidden">
           <div className="flex min-w-0 items-center gap-2">
             {nested ? (
-              <Link to={backTo} className="text-sm text-sage-deep">
+              <Link to={backTo} className="text-sm text-plum">
                 {t('nav.back')}
               </Link>
             ) : (
-              <Link to="/today" className="truncate text-base font-medium text-ink md:hidden">
+              <Link to="/today" className="truncate text-base font-medium text-ink">
                 {APP_NAME}
               </Link>
             )}
@@ -125,36 +133,16 @@ export function AppShell() {
             {isSpecialist ? (
               <Link
                 to="/cabinet"
-                className="mr-1 max-w-[11rem] truncate rounded-full bg-sage/15 px-3 py-1.5 text-xs text-sage-deep md:max-w-none"
+                className="mr-1 max-w-[11rem] truncate rounded-full bg-plum/12 px-3 py-1.5 text-xs text-plum lg:max-w-none"
                 title={t('invite.asSpecialist')}
               >
-                <span className="sm:hidden">{t('invite.roleSpecialist')}</span>
-                <span className="hidden sm:inline">{t('invite.asSpecialist')}</span>
+                {t('invite.asSpecialist')}
               </Link>
             ) : null}
-            <Link
-              to="/crisis"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-terra md:hidden"
-              aria-label={t('nav.crisis')}
-            >
-              <LifeBuoy size={20} strokeWidth={1.75} />
-            </Link>
-            <Link
-              to="/profile"
-              className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-2 text-muted hover:bg-card hover:text-ink"
-              aria-label={profileLabel ? `${profileLabel}, ${t('nav.profile')}` : t('nav.profile')}
-            >
-              {profileLabel ? (
-                <span className="max-w-[5.5rem] truncate text-sm text-ink sm:max-w-[10rem] md:max-w-[14rem]">
-                  {profileLabel}
-                </span>
-              ) : null}
-              <CircleUserRound size={22} strokeWidth={1.75} className="shrink-0" />
-            </Link>
           </div>
         </header>
 
-        <main className="mx-auto w-full min-w-0 max-w-xl px-4 py-6 pb-24 md:max-w-3xl md:pb-10 lg:max-w-4xl">
+        <main className="mx-auto w-full min-w-0 max-w-xl px-4 py-6 pb-24 lg:max-w-4xl lg:pb-10 md:max-w-3xl">
           {needName ? (
             <NameStep onSaved={() => nameNotice.show(t('common.savedNotice'), t('name.saved'))} />
           ) : (
@@ -165,25 +153,27 @@ export function AppShell() {
 
       <nav
         className={cn(
-          'fixed inset-x-0 bottom-0 z-10 grid border-t border-line bg-card/95 px-1 py-1 backdrop-blur-sm md:hidden print:hidden',
-          isSpecialist ? 'grid-cols-5' : 'grid-cols-4',
+          'fixed inset-x-0 bottom-0 z-10 grid border-t border-line bg-card/95 px-0.5 py-1 backdrop-blur-sm lg:hidden print:hidden',
+          isSpecialist ? 'grid-cols-6' : 'grid-cols-5',
         )}
       >
         {items.map((item) => {
           const Icon = icons[item.icon]
+          const compact = isSpecialist
           return (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  'flex min-h-12 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 text-center text-[10px] leading-tight sm:text-[11px]',
-                  isActive ? 'text-sage-deep' : 'text-muted',
+                  'flex min-h-12 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 text-center leading-tight',
+                  compact ? 'text-[9px] sm:text-[10px]' : 'text-[10px] sm:text-[11px]',
+                  isActive ? 'text-plum' : 'text-muted',
                 )
               }
             >
-              <Icon size={20} strokeWidth={1.75} className="shrink-0" />
-              <span className="w-full">{t(item.key)}</span>
+              <Icon size={compact ? 18 : 20} strokeWidth={1.75} className="shrink-0" />
+              <span className="w-full truncate">{mobileNavLabel(item.to, item.key, t)}</span>
             </NavLink>
           )
         })}

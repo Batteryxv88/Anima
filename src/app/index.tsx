@@ -10,6 +10,7 @@ import {
   useCareStore,
   useShareStore,
 } from '@/entities/care'
+import { listenForYou } from '@/entities/for-you'
 import { listenTechniqueStats, listenTechniques } from '@/entities/technique'
 import { listenAuth, pullProfile, pushProfile, useUserStore } from '@/entities/user'
 import { isCloudLocked } from '@/shared/lib'
@@ -48,9 +49,11 @@ function CloudSync({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stopTechniques = listenTechniques()
     const stopStats = listenTechniqueStats()
+    const stopForYou = listenForYou()
     return () => {
       stopTechniques()
       stopStats()
+      stopForYou()
     }
   }, [])
 

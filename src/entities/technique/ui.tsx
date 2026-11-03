@@ -11,6 +11,7 @@ import {
   type Technique,
   type TechniqueField,
 } from './model'
+import { schoolAccentBorderLeft, schoolAccentText } from './school-accent'
 import type { Locale } from '@/shared/config'
 import { cn, normalizeScaleValue, SCALE_MAX, SCALE_MIN } from '@/shared/lib'
 import { SkillAverageRating, SkillLikeButton } from './skill-feedback'
@@ -50,7 +51,12 @@ export function TechniqueCard({ technique, note }: { technique: Technique; note?
   const copy = techniqueCopy(technique, i18n.language as Locale)
 
   return (
-    <div className="relative rounded-2xl border border-line bg-card hover:border-sage/40">
+    <div
+      className={cn(
+        'relative rounded-2xl border border-line border-l-4 bg-card shadow-sm shadow-plum/5 hover:border-plum/30',
+        schoolAccentBorderLeft(technique.school),
+      )}
+    >
       <div className="absolute right-2 top-2 z-10 flex items-center gap-1.5">
         <SkillAverageRating techniqueId={technique.id} compact />
         <SkillLikeButton techniqueId={technique.id} ghost />
@@ -61,7 +67,9 @@ export function TechniqueCard({ technique, note }: { technique: Technique; note?
         className="block p-5 pr-24"
       >
         <TechniqueCover coverUrl={technique.coverUrl} compact />
-        <p className="text-xs uppercase tracking-wide text-sand">{t(`school.${technique.school}`)}</p>
+        <p className={cn('text-xs font-medium uppercase tracking-wide', schoolAccentText(technique.school))}>
+          {t(`school.${technique.school}`)}
+        </p>
         <h2 className="mt-1 text-lg font-medium text-ink">{copy.title}</h2>
         <p className="mt-1 text-sm text-muted">{t('skills.duration', { count: technique.durationMin })}</p>
         {note ? <p className="mt-2 text-sm leading-relaxed text-muted">{note}</p> : null}

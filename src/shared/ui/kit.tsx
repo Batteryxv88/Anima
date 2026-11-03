@@ -17,7 +17,9 @@ export function PageHeader({
   return (
     <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h1 className="text-[1.65rem] font-medium leading-tight tracking-tight text-ink">{title}</h1>
+        <h1 className="text-[1.75rem] font-medium leading-tight tracking-tight text-ink">
+          {title}
+        </h1>
         {text ? <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">{text}</p> : null}
       </div>
       {action}
@@ -33,13 +35,18 @@ export function Card({
   className?: string
 }) {
   return (
-    <section className={cn('min-w-0 rounded-2xl border border-line bg-card p-4 sm:p-5', className)}>
+    <section
+      className={cn(
+        'min-w-0 rounded-2xl border border-line bg-card p-4 shadow-sm shadow-plum/5 sm:p-5',
+        className,
+      )}
+    >
       {children}
     </section>
   )
 }
 
-type ButtonVariant = 'primary' | 'ghost' | 'outline' | 'danger'
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger'
 
 export function Button({
   variant = 'primary',
@@ -50,12 +57,16 @@ export function Button({
     <button
       className={cn(
         'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition-colors duration-150',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/50 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        variant === 'primary' && 'bg-sage text-white hover:bg-sage-deep',
+        variant === 'primary' &&
+          'bg-plum text-white hover:bg-plum-deep dark:text-ink dark:hover:bg-plum-deep',
+        variant === 'secondary' &&
+          'border border-peach/50 bg-peach/25 text-ink hover:bg-peach/40 dark:border-peach/30 dark:bg-peach/15',
         variant === 'ghost' && 'text-ink hover:bg-card',
-        variant === 'outline' && 'border border-line bg-card text-ink hover:border-sage/40',
-        variant === 'danger' && 'bg-terra text-white hover:bg-terra/90',
+        variant === 'outline' && 'border border-line bg-card text-ink hover:border-plum/35',
+        variant === 'danger' &&
+          'border border-terra/50 bg-transparent text-terra hover:bg-terra/10',
         className,
       )}
       {...props}
@@ -65,22 +76,111 @@ export function Button({
 
 export function Chip({
   active,
+  size = 'default',
+  className,
   children,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  active?: boolean
+  size?: 'default' | 'compact'
+}) {
   return (
     <button
+      type="button"
       className={cn(
-        'min-h-10 shrink-0 rounded-full border px-3.5 text-sm transition-colors duration-150',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/60',
+        'shrink-0 rounded-full border transition-colors duration-150',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/50',
+        size === 'compact'
+          ? 'min-h-8 px-2.5 py-1 text-xs leading-snug'
+          : 'min-h-10 px-3.5 text-sm',
         active
-          ? 'border-sage bg-sage text-white'
-          : 'border-line bg-card text-ink hover:border-sage/40',
+          ? 'border-plum bg-plum text-white dark:text-ink'
+          : 'border-line bg-card text-ink hover:border-plum/35',
+        className,
       )}
       {...props}
     >
       {children}
     </button>
+  )
+}
+
+export function FilterMenu({
+  label,
+  active,
+  value,
+  onChange,
+  options,
+}: {
+  label: string
+  active?: boolean
+  value: string
+  onChange: (id: string) => void
+  options: { id: string; label: string }[]
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const selected = options.find((item) => item.id === value)
+
+  useEffect(() => {
+    if (!open) return
+    const close = (event: MouseEvent) => {
+      if (rootRef.current?.contains(event.target as Node)) return
+      setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  const buttonText = active && selected ? selected.label : label
+
+  return (
+    <div ref={rootRef} className="relative shrink-0">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        className={cn(
+          'inline-flex max-w-[10.5rem] min-h-8 items-center gap-1 rounded-full border px-2.5 py-1 text-xs leading-snug transition-colors duration-150',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/50',
+          active
+            ? 'border-plum bg-plum text-white dark:text-ink'
+            : 'border-line bg-card text-ink hover:border-plum/35',
+        )}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span className="truncate">{buttonText}</span>
+        <span aria-hidden className="shrink-0 text-[10px] opacity-80">
+          ▾
+        </span>
+      </button>
+      {open ? (
+        <ul
+          role="listbox"
+          className="absolute left-0 top-full z-30 mt-1 max-h-56 min-w-[12rem] max-w-[min(18rem,calc(100vw-2rem))] overflow-auto rounded-xl border border-line bg-card py-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+        >
+          {options.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={item.id === value}
+                className={cn(
+                  'flex min-h-9 w-full items-center px-3 py-2 text-left text-sm',
+                  item.id === value ? 'bg-plum/10 text-plum' : 'text-ink hover:bg-canvas',
+                )}
+                onClick={() => {
+                  onChange(item.id)
+                  setOpen(false)
+                }}
+              >
+                {item.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
   )
 }
 
@@ -110,7 +210,7 @@ export function Field({
 export function TextField(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className="w-full min-w-0 max-w-full rounded-xl border border-line bg-canvas px-3 py-2.5 text-sm text-ink outline-none focus:border-sage"
+      className="w-full min-w-0 max-w-full rounded-xl border border-line bg-canvas px-3 py-2.5 text-sm text-ink outline-none focus:border-plum"
       {...props}
     />
   )
@@ -122,7 +222,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
       <textarea
         ref={ref}
         rows={4}
-        className="w-full min-w-0 max-w-full resize-y rounded-xl border border-line bg-canvas px-3 py-2.5 text-sm leading-relaxed text-ink outline-none focus:border-sage"
+        className="w-full min-w-0 max-w-full resize-y rounded-xl border border-line bg-canvas px-3 py-2.5 text-sm leading-relaxed text-ink outline-none focus:border-plum"
         {...props}
       />
     )
@@ -223,7 +323,7 @@ export function Scale({
     <label className="block">
       <span className="mb-2 flex items-center justify-between gap-3 text-sm">
         <span className="text-ink">{label}</span>
-        <span className="text-right font-medium text-sage-deep">{valueLabel}</span>
+        <span className="text-right font-medium text-plum">{valueLabel}</span>
       </span>
       <input
         type="range"
@@ -232,7 +332,7 @@ export function Scale({
         value={value}
         aria-valuetext={valueLabel}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="h-2 w-full cursor-pointer appearance-none rounded-full bg-line accent-sage"
+        className="h-2 w-full cursor-pointer appearance-none rounded-full bg-line accent-plum"
       />
       <span className="mt-1.5 flex justify-between text-xs text-muted">
         <span>{minLabel}</span>
@@ -242,6 +342,26 @@ export function Scale({
   )
 }
 
+type ScaleAccent = 'plum' | 'coral' | 'lavender'
+
+const scaleAccentActive: Record<ScaleAccent, string> = {
+  plum: 'border-plum bg-plum text-white dark:text-ink',
+  coral: 'border-coral bg-coral text-white dark:text-ink',
+  lavender: 'border-lavender bg-lavender/90 text-ink',
+}
+
+const scaleAccentRing: Record<ScaleAccent, string> = {
+  plum: 'focus-visible:ring-plum/50',
+  coral: 'focus-visible:ring-coral/50',
+  lavender: 'focus-visible:ring-lavender/50',
+}
+
+const scaleAccentText: Record<ScaleAccent, string> = {
+  plum: 'text-plum',
+  coral: 'text-coral',
+  lavender: 'text-lavender',
+}
+
 export function ScaleTap({
   label,
   minLabel,
@@ -249,6 +369,7 @@ export function ScaleTap({
   valueLabel,
   value,
   onChange,
+  accent = 'plum',
 }: {
   label: string
   minLabel: string
@@ -256,12 +377,13 @@ export function ScaleTap({
   valueLabel: string
   value: number
   onChange: (value: number) => void
+  accent?: ScaleAccent
 }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-3 text-sm">
         <span className="text-ink">{label}</span>
-        <span className="text-right font-medium text-sage-deep">{valueLabel}</span>
+        <span className={cn('text-right font-medium', scaleAccentText[accent])}>{valueLabel}</span>
       </div>
       <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
         {scaleStepValues.map((step) => {
@@ -275,10 +397,11 @@ export function ScaleTap({
               onClick={() => onChange(step)}
               className={cn(
                 'flex min-h-10 min-w-10 items-center justify-center rounded-full border text-sm tabular-nums transition-colors duration-150',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/60',
+                'focus-visible:outline-none focus-visible:ring-2',
+                scaleAccentRing[accent],
                 active
-                  ? 'border-sage bg-sage text-white'
-                  : 'border-line bg-card text-ink hover:border-sage/40',
+                  ? scaleAccentActive[accent]
+                  : 'border-line bg-card text-ink hover:border-plum/35',
               )}
             >
               {step}
@@ -304,6 +427,7 @@ export function ChoiceGroup({
 
 export function ChoiceButton({
   active,
+  className,
   children,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }) {
@@ -312,7 +436,8 @@ export function ChoiceButton({
       type="button"
       className={cn(
         'min-h-12 rounded-xl border px-4 text-left text-sm transition-colors duration-150',
-        active ? 'border-sage bg-sage/10 text-ink' : 'border-line bg-card text-ink hover:border-sage/40',
+        active ? 'border-plum bg-plum/10 text-ink' : 'border-line bg-card text-ink hover:border-plum/35',
+        className,
       )}
       {...props}
     >
@@ -415,7 +540,7 @@ export function SearchSelect({
                   aria-selected={item.id === value}
                   className={cn(
                     'flex min-h-11 w-full min-w-0 flex-col items-start justify-center px-3 py-2 text-left text-sm',
-                    item.id === value ? 'bg-sage/10 text-sage-deep' : 'text-ink hover:bg-canvas',
+                    item.id === value ? 'bg-plum/10 text-plum' : 'text-ink hover:bg-canvas',
                   )}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
@@ -501,11 +626,12 @@ export function NoticeDialog({
     >
       <div
         className={cn(
-          'w-full max-w-[20rem] rounded-[1.6rem] border border-line bg-card px-6 pb-6 pt-8 text-center shadow-[0_24px_60px_-32px_rgba(43,41,38,0.58)]',
+          'relative w-full max-w-[20rem] overflow-hidden rounded-[1.6rem] border border-line bg-card px-6 pb-6 pt-8 text-center shadow-[0_24px_48px_-28px_rgba(48,43,53,0.35)]',
           leaving ? 'anima-panel-out' : 'anima-panel-in',
         )}
         onClick={(event) => event.stopPropagation()}
       >
+        <div className="anima-sunset-gradient absolute inset-x-0 top-0 h-1.5" aria-hidden="true" />
         <div className="anima-check mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-sage/12">
           <svg viewBox="0 0 24 24" className="h-6 w-6 text-sage" fill="none" aria-hidden>
             <path

@@ -105,10 +105,10 @@ export function InvitePanel() {
     <div className="mt-4 grid gap-4">
       {isSpecialist ? (
         <div className="grid gap-2">
-          <p className="text-sm text-sage-deep">{t('invite.asSpecialist')}</p>
+          <p className="text-sm text-plum">{t('invite.asSpecialist')}</p>
           <Link
             to="/cabinet"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-sage px-4 text-sm font-medium text-white"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-plum px-4 text-sm font-medium text-white dark:text-ink"
           >
             {t('cabinet.open')}
           </Link>
@@ -133,7 +133,7 @@ export function InvitePanel() {
       ) : hasSpecialist ? (
         <div className="grid gap-2">
           <p className="text-sm leading-relaxed text-muted">{t('invite.connected')}</p>
-          <Button variant="ghost" className="justify-start px-0 text-sage-deep" onClick={startInvite}>
+          <Button variant="ghost" className="justify-start px-0 text-plum" onClick={startInvite}>
             {t('invite.createAnother')}
           </Button>
         </div>

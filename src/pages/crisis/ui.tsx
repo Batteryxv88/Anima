@@ -37,7 +37,7 @@ export function CrisisPage() {
                   key={technique.id}
                   to={`/skills/${technique.id}`}
                   state={{ from: here.pathname }}
-                  className="rounded-xl border border-line px-4 py-3 text-sm hover:border-sage/40"
+                  className="rounded-xl border border-line px-4 py-3 text-sm hover:border-plum/35"
                 >
                   {techniqueCopy(technique, locale).title}
                 </Link>
@@ -52,11 +52,11 @@ export function CrisisPage() {
             {lines.map((line) => (
               <li key={line.nameKey}>
                 {line.phone ? (
-                  <a className="text-sm text-sage-deep" href={`tel:${line.phone}`}>
+                  <a className="text-sm text-plum" href={`tel:${line.phone}`}>
                     {t(line.nameKey)} · {line.display ?? line.phone}
                   </a>
                 ) : (
-                  <a className="text-sm text-sage-deep" href={line.href} target="_blank" rel="noreferrer">
+                  <a className="text-sm text-plum" href={line.href} target="_blank" rel="noreferrer">
                     {t(line.nameKey)}
                   </a>
                 )}

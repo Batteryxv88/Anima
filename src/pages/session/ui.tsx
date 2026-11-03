@@ -44,7 +44,7 @@ export function SessionPage() {
           {t('session.range')}: {weekRangeLabel(localeTags[locale])}
         </p>
         <Card>
-          <h2 className="text-xs tracking-wide text-sand">{t('session.want')}</h2>
+          <h2 className="text-xs tracking-wide text-gold">{t('session.want')}</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted">{t('session.wantHint')}</p>
           <div className="mt-3">
             <TextArea value={sessionNote} onChange={(event) => setSessionNote(event.target.value)} />
@@ -52,23 +52,23 @@ export function SessionPage() {
         </Card>
         {weekCheckIns.length > 0 ? (
           <Card>
-            <h2 className="text-xs tracking-wide text-sand">{t('session.week')}</h2>
+            <h2 className="text-xs tracking-wide text-gold">{t('session.week')}</h2>
             <WeekMarks checkIns={weekCheckIns} />
           </Card>
         ) : null}
         {weekPractices.length > 0 || weekAssignments.length > 0 ? (
           <Card>
-            <h2 className="text-xs tracking-wide text-sand">{t('session.practiced')}</h2>
+            <h2 className="text-xs tracking-wide text-gold">{t('session.practiced')}</h2>
             <WeekWork assignments={weekAssignments} practices={weekPractices} />
           </Card>
         ) : null}
         {weekShared.length > 0 ? (
           <Card>
-            <h2 className="text-xs tracking-wide text-sand">{t('session.journal')}</h2>
+            <h2 className="text-xs tracking-wide text-gold">{t('session.journal')}</h2>
             <ul className="mt-4 grid gap-5">
               {weekShared.map((item) => (
                 <li key={item.id}>
-                  <p className="text-xs tracking-wide text-sand">
+                  <p className="text-xs tracking-wide text-gold">
                     {item.kind === 'thought' ? t('journal.kindThought') : t('journal.kindNote')}
                   </p>
                   <p className="mt-1 text-xs text-muted">{formatStamp(item.at, localeTags[locale])}</p>
@@ -77,7 +77,7 @@ export function SessionPage() {
                   </p>
                   {item.kind === 'thought' && item.otherLook ? (
                     <p className="mt-2 text-sm leading-relaxed text-muted">
-                      <span className="text-xs tracking-wide text-sand">{t('journal.otherLook')}</span>
+                      <span className="text-xs tracking-wide text-gold">{t('journal.otherLook')}</span>
                       <span className="mt-1 block">{item.otherLook}</span>
                     </p>
                   ) : null}
@@ -88,7 +88,7 @@ export function SessionPage() {
         ) : null}
         {comments.length > 0 ? (
           <Card>
-            <h2 className="text-xs tracking-wide text-sand">{t('session.fromSpecialist')}</h2>
+            <h2 className="text-xs tracking-wide text-gold">{t('session.fromSpecialist')}</h2>
             <ul className="mt-4 grid gap-4">
               {comments.map((item) => (
                 <li key={item.id}>

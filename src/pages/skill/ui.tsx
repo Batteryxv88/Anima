@@ -5,6 +5,7 @@ import { useCareStore } from '@/entities/care'
 import {
   TechniqueCover,
   TechniqueFields,
+  schoolAccentText,
   techniqueCopy,
   useTechniqueStore,
   type FieldAnswers,
@@ -16,7 +17,7 @@ import { SkillLikeButton, SkillStarRating } from '@/entities/technique'
 import { Button, Card, Field, NoticeLayer, PageHeader, RichText, TextArea, useNotice } from '@/shared/ui'
 
 const outlineLink =
-  'inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink hover:border-sage/40'
+  'inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink hover:border-plum/35'
 
 export function SkillPage() {
   const { id } = useParams()
@@ -55,7 +56,7 @@ export function SkillPage() {
   return (
     <>
       <NoticeLayer notice={notice} onClose={hide} />
-      <Link to={back} className="mb-3 inline-flex min-h-11 items-center text-sm text-sage-deep">
+      <Link to={back} className="mb-3 inline-flex min-h-11 items-center text-sm text-plum">
         {back === '/skills' ? t('skill.backToList') : t('nav.back')}
       </Link>
       <PageHeader
@@ -75,10 +76,12 @@ export function SkillPage() {
           <div className="absolute right-3 top-3">
             <SkillLikeButton techniqueId={technique.id} ghost />
           </div>
-          <p className="text-xs uppercase tracking-wide text-sand">{t(`school.${technique.school}`)}</p>
+          <p className={`text-xs font-medium uppercase tracking-wide ${schoolAccentText(technique.school)}`}>
+            {t(`school.${technique.school}`)}
+          </p>
           {copy.when.trim() ? (
             <>
-              <h2 className="mt-4 text-xs tracking-wide text-sand">{t('skill.when')}</h2>
+              <h2 className="mt-4 text-xs tracking-wide text-gold">{t('skill.when')}</h2>
               <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-muted">
                 <RichText text={copy.when} />
               </p>
@@ -86,7 +89,7 @@ export function SkillPage() {
           ) : null}
           {copy.about.trim() ? (
             <>
-              <h2 className="mt-4 text-xs tracking-wide text-sand">{t('skill.about')}</h2>
+              <h2 className="mt-4 text-xs tracking-wide text-gold">{t('skill.about')}</h2>
               <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-muted">
                 <RichText text={copy.about} />
               </p>
@@ -95,13 +98,13 @@ export function SkillPage() {
         </Card>
         {copy.steps.filter((item) => item.trim()).length > 0 ? (
           <Card>
-            <h2 className="text-xs tracking-wide text-sand">{t('skill.steps')}</h2>
+            <h2 className="text-xs tracking-wide text-gold">{t('skill.steps')}</h2>
             <ol className="mt-3 grid gap-2">
               {copy.steps
                 .filter((item) => item.trim())
                 .map((step, index) => (
                   <li key={`${index}-${step}`} className="text-sm leading-relaxed">
-                    <span className="mr-2 text-sand">{index + 1}.</span>
+                    <span className="mr-2 text-gold">{index + 1}.</span>
                     <RichText text={step} />
                   </li>
                 ))}

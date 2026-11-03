@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { findUserByEmail, listStaff, setStaffRole, useUserStore, type StaffRecord } from '@/entities/user'
 import { FOUNDER_EMAIL, type StaffRole } from '@/shared/config'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { Button, Card, ChoiceButton, Field, NoticeLayer, PageHeader, TextField, useNotice } from '@/shared/ui'
 
 export function StaffRolesPage() {
@@ -29,6 +29,9 @@ export function StaffRolesPage() {
   return (
     <>
       <NoticeLayer notice={notice} onClose={hide} />
+      <Link to="/profile" className="mb-3 inline-flex min-h-11 items-center text-sm text-plum lg:hidden">
+        {t('nav.back')}
+      </Link>
       <PageHeader title={t('staff.rolesTitle')} text={t('staff.rolesText')} />
       <div className="grid gap-4">
         <Card>

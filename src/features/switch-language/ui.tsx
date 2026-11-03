@@ -32,9 +32,9 @@ export function WelcomeLanguageSwitch() {
             onClick={() => setLanguage(item as Locale)}
             className={cn(
               'min-h-9 rounded-full border px-3 text-xs font-medium tracking-wide transition-colors duration-150',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/60',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/50',
               active
-                ? 'border-sage/40 bg-sage/10 text-sage-deep'
+                ? 'border-plum/35 bg-plum/10 text-plum'
                 : 'border-transparent text-muted hover:border-line/80 hover:bg-card/60 hover:text-ink',
             )}
           >

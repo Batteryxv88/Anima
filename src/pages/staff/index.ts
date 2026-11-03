@@ -1,3 +1,6 @@
 export { StaffTechniquePage } from './catalog'
+export { StaffForYouArticlePage } from './for-you-article'
+export { StaffForYouGroupPage } from './for-you-group'
+export { StaffForYouHomePage } from './for-you-home'
 export { StaffRolesPage } from './roles'
 export { StaffHome, StaffLayout } from './ui'

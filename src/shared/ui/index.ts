@@ -7,6 +7,7 @@ export {
   ChoiceGroup,
   EmptyState,
   Field,
+  FilterMenu,
   FormatArea,
   NoticeDialog,
   NoticeLayer,
@@ -22,3 +23,4 @@ export {
 } from './kit'
 export type { NoticeCopy } from './kit'
 export { QrMark } from './qr'
+export { SunsetBanner, SunsetHorizon } from './horizon'

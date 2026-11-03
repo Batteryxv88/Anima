@@ -1,16 +1,26 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { authErrorKey, signInEmail, signInGoogle, signUpEmail, useUserStore } from '@/entities/user'
+import {
+  authErrorKey,
+  clearGoogleRedirectPending,
+  isGoogleRedirectPending,
+  isStandalonePwa,
+  signInEmail,
+  signInGoogle,
+  signUpEmail,
+  useUserStore,
+} from '@/entities/user'
 import { APP_NAME } from '@/shared/config'
 import { isFirebaseConfigured } from '@/shared/firebase'
 import { clearNext, peekNext } from '@/shared/lib'
-import { Button, Card, Chip, Field, TextField } from '@/shared/ui'
+import { Button, Card, Chip, Field, SunsetBanner, TextField } from '@/shared/ui'
 
 export function AuthPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const uid = useUserStore((state) => state.uid)
+  const authReady = useUserStore((state) => state.authReady)
   const [mode, setMode] = useState<'in' | 'up'>('in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,10 +28,31 @@ export function AuthPage() {
   const [pending, setPending] = useState(false)
   const ready = isFirebaseConfigured()
   const returnPath = useMemo(() => peekNext('/profile'), [])
+  const standalone = typeof window !== 'undefined' && isStandalonePwa()
+  const browserAuthUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/auth${window.location.search}`
+      : '/auth'
 
   useEffect(() => {
     if (uid) clearNext()
   }, [uid])
+
+  useEffect(() => {
+    if (!authReady || uid) return
+    if (isGoogleRedirectPending()) {
+      setError(t('auth.redirectFailed'))
+      clearGoogleRedirectPending()
+    }
+  }, [authReady, t, uid])
+
+  if (!authReady && !uid) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-xl flex-col justify-center px-4 py-10">
+        <p className="text-center text-sm text-muted">{t('auth.finishingRedirect')}</p>
+      </div>
+    )
+  }
 
   if (uid) return <Navigate to={returnPath} replace />
 
@@ -48,23 +79,31 @@ export function AuthPage() {
     setError('')
     setPending(true)
     try {
-      await signInGoogle()
-      navigate(returnPath, { replace: true })
+      const outcome = await signInGoogle()
+      if (outcome === 'signed-in') navigate(returnPath, { replace: true })
     } catch (caught) {
       setError(t(authErrorKey(caught)))
-    } finally {
       setPending(false)
     }
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-xl flex-col justify-center px-4 py-10">
-      <p className="mb-6 text-lg font-medium tracking-tight">{APP_NAME}</p>
+    <div className="anima-shell-bg mx-auto flex min-h-dvh max-w-xl flex-col justify-center px-4 py-10">
+      <p className="mb-4 text-xl font-medium tracking-tight text-ink">{APP_NAME}</p>
+      <SunsetBanner className="mb-4" />
       <Card>
         <h1 className="text-2xl font-medium">{t(mode === 'up' ? 'auth.signUpTitle' : 'auth.signInTitle')}</h1>
         <p className="mt-3 text-sm leading-relaxed text-muted">{t('auth.lead')}</p>
         {sessionStorage.getItem('anima-next') ? (
           <p className="mt-2 text-sm leading-relaxed text-muted">{t('auth.returnHint')}</p>
+        ) : null}
+        {standalone ? (
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            {t('auth.googlePwaHint')}{' '}
+            <a className="text-plum underline" href={browserAuthUrl}>
+              {t('auth.openInBrowser')}
+            </a>
+          </p>
         ) : null}
         {typeof window !== 'undefined' && window.location.hostname === '127.0.0.1' ? (
           <p className="mt-3 text-sm leading-relaxed text-terra">
@@ -114,7 +153,7 @@ export function AuthPage() {
         ) : (
           <p className="mt-6 text-sm leading-relaxed text-muted">{t('auth.noFirebase')}</p>
         )}
-        <Link to="/profile" className="mt-6 inline-flex min-h-11 items-center text-sm text-sage-deep">
+        <Link to="/profile" className="mt-6 inline-flex min-h-11 items-center text-sm text-plum">
           {t('nav.back')}
         </Link>
       </Card>

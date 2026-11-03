@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useCareStore, type JournalKind } from '@/entities/care'
 import { localeTags, type Locale } from '@/shared/config'
 import { formatStamp } from '@/shared/lib'
@@ -51,9 +51,12 @@ export function JournalPage() {
   return (
     <>
       <NoticeLayer notice={notice} onClose={hide} />
+      <Link to="/today" className="mb-3 inline-flex min-h-11 items-center text-sm text-plum lg:hidden">
+        {t('nav.back')}
+      </Link>
       <PageHeader title={t('journal.title')} text={t('journal.text')} />
       <div className="grid gap-4">
-        <Card>
+        <Card className="border-lavender/30 bg-lavender/8">
           <div className="flex flex-wrap gap-2">
             <Chip
               active={kind === 'note'}
@@ -114,7 +117,7 @@ export function JournalPage() {
             {journal.map((entry) => (
               <Card key={entry.id}>
                 <p className="text-xs text-muted">{formatStamp(entry.at, localeTags[locale])}</p>
-                <p className="mt-1 text-xs text-sand">
+                <p className="mt-1 text-xs text-muted">
                   {entry.kind === 'thought' ? t('journal.kindThought') : t('journal.kindNote')}
                 </p>
                 <p className="mt-2 text-sm leading-relaxed">{preview(entry.kind, entry)}</p>

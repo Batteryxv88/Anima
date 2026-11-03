@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { isStaffRole, useUserStore } from '@/entities/user'
 import {
   deleteTechnique,
@@ -10,8 +10,10 @@ import {
   fieldKinds,
   fillTranslations,
   saveTechnique,
+  catalogSituations,
+  schoolAccentBgSoft,
+  schoolAccentText,
   schools,
-  situations,
   TechniqueCover,
   useTechniqueStore,
   type FieldKind,
@@ -19,7 +21,12 @@ import {
   type Situation,
   type Technique,
 } from '@/entities/technique'
-import { Button, Card, ChoiceButton, Field, FormatArea, PageHeader, TextArea, TextField } from '@/shared/ui'
+import { cn } from '@/shared/lib'
+import { Button, Card, Chip, ChoiceButton, Field, FormatArea, PageHeader, TextArea, TextField } from '@/shared/ui'
+
+function toggleSituation(list: Situation[], item: Situation, active: boolean) {
+  return active ? list.filter((value) => value !== item) : [...list, item]
+}
 
 export function StaffTechniquePage() {
   const { id } = useParams()
@@ -53,6 +60,9 @@ export function StaffTechniquePage() {
 
   return (
     <>
+      <Link to="/skills" className="mb-3 inline-flex min-h-11 items-center text-sm text-plum lg:hidden">
+        {t('nav.back')}
+      </Link>
       <PageHeader title={!id || id === 'new' ? t('staff.addSkill') : t('staff.editTitle')} />
       <Card>
         <div className="grid gap-3">
@@ -88,33 +98,59 @@ export function StaffTechniquePage() {
           </div>
           <p className="text-sm text-muted">{t('staff.school')}</p>
           <div className="flex flex-wrap gap-2">
-            {schools.map((item) => (
-              <ChoiceButton key={item} active={draft.school === item} onClick={() => setDraft((current) => ({ ...current, school: item as School }))}>
-                {t(`school.${item}`)}
-              </ChoiceButton>
-            ))}
-          </div>
-          <p className="text-sm text-muted">{t('staff.situations')}</p>
-          <div className="flex flex-wrap gap-2">
-            {situations.map((item) => {
-              const active = draft.situations.includes(item)
+            {schools.map((item) => {
+              const active = draft.school === item
               return (
                 <ChoiceButton
                   key={item}
                   active={active}
-                  onClick={() =>
-                    setDraft((current) => ({
-                      ...current,
-                      situations: active
-                        ? current.situations.filter((value) => value !== item)
-                        : [...current.situations, item as Situation],
-                    }))
-                  }
+                  className={cn(active && schoolAccentBgSoft(item), active && schoolAccentText(item))}
+                  onClick={() => setDraft((current) => ({ ...current, school: item as School }))}
                 >
-                  {t(`situation.${item}`)}
+                  {t(`school.${item}`)}
                 </ChoiceButton>
               )
             })}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-ink">{t('staff.situations')}</p>
+            <p className="mt-1 text-sm text-muted">{t('staff.situationsHint')}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {catalogSituations.map((item) => {
+                const active = draft.situations.includes(item)
+                return (
+                  <Chip
+                    key={item}
+                    size="compact"
+                    active={active}
+                    onClick={() =>
+                      setDraft((current) => ({
+                        ...current,
+                        situations: toggleSituation(current.situations, item, active),
+                      }))
+                    }
+                  >
+                    {t(`situation.${item}`)}
+                  </Chip>
+                )
+              })}
+            </div>
+            <p className="mt-3 text-sm text-muted">{t('staff.situationCrisis')}</p>
+            <div className="mt-1.5">
+              <Chip
+                size="compact"
+                active={draft.situations.includes('crisis')}
+                onClick={() => {
+                  const active = draft.situations.includes('crisis')
+                  setDraft((current) => ({
+                    ...current,
+                    situations: toggleSituation(current.situations, 'crisis', active),
+                  }))
+                }}
+              >
+                {t('situation.crisis')}
+              </Chip>
+            </div>
           </div>
           <FormatArea
             label={t('skill.about')}

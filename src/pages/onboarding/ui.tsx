@@ -7,44 +7,22 @@ import { ThemeSwitch } from '@/features/toggle-theme'
 import { CountryPicker } from '@/features/pick-country'
 import { APP_NAME, careModes, type CareMode } from '@/shared/config'
 import { cn, takeNext } from '@/shared/lib'
-import { Button, Card, ChoiceButton, ChoiceGroup } from '@/shared/ui'
+import { Button, Card, ChoiceButton, ChoiceGroup, SunsetHorizon } from '@/shared/ui'
 
 const welcomeBeads: { className: string; style: CSSProperties }[] = [
   {
-    className: 'bg-sage anima-welcome-bead',
+    className: 'bg-peach anima-welcome-bead',
     style: { top: '6%', left: '2%', animationDelay: '0s' },
   },
   {
-    className: 'bg-ink anima-welcome-bead',
+    className: 'bg-plum anima-welcome-bead',
     style: { top: '14%', right: '0%', animationDelay: '2.5s' },
   },
   {
-    className: 'bg-sand anima-welcome-bead',
+    className: 'bg-lavender anima-welcome-bead',
     style: { bottom: '10%', left: '10%', animationDelay: '5s' },
   },
 ]
-
-function WelcomeHorizon() {
-  return (
-    <svg
-      className="anima-welcome-horizon pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(44vh,16rem)] w-full sm:h-[min(32vh,13rem)]"
-      viewBox="0 0 400 100"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <path
-        fill="currentColor"
-        fillOpacity="0.1"
-        d="M0,52 C80,38 120,68 200,50 S320,32 400,48 L400,100 L0,100 Z"
-      />
-      <path
-        fill="currentColor"
-        fillOpacity="0.05"
-        d="M0,62 C100,48 160,72 260,58 S340,44 400,56 L400,100 L0,100 Z"
-      />
-    </svg>
-  )
-}
 
 function WelcomeMark() {
   return (
@@ -59,8 +37,8 @@ function WelcomeMark() {
           style={bead.style}
         />
       ))}
-      <span className="anima-breath-ring absolute size-28 rounded-full bg-sage/15 sm:size-36" />
-      <span className="anima-breath absolute size-[5.5rem] rounded-full bg-sage/22 sm:size-28" />
+      <span className="anima-breath-ring absolute size-28 rounded-full bg-coral/20 sm:size-36" />
+      <span className="anima-breath absolute size-[5.5rem] rounded-full bg-peach/35 sm:size-28" />
       <span className="relative text-lg font-medium tracking-tight sm:text-xl">{APP_NAME}</span>
     </div>
   )
@@ -114,7 +92,7 @@ function WelcomeNextButton({ leaving, onClick }: { leaving: boolean; onClick: ()
   const { t } = useTranslation()
   return (
     <Button
-      className="relative z-10 min-h-11 w-auto min-w-[12rem] px-10 text-sm shadow-sm shadow-sage/15"
+      className="relative z-10 min-h-11 w-auto min-w-[12rem] px-10 text-sm shadow-sm shadow-plum/15"
       disabled={leaving}
       onClick={onClick}
     >
@@ -153,7 +131,7 @@ function WelcomeScene({ language, onDone }: { language: string; onDone: () => vo
     >
       <div className="anima-welcome-bg pointer-events-none absolute inset-0" aria-hidden="true" />
       <div className="anima-welcome-grain pointer-events-none absolute inset-0" aria-hidden="true" />
-      <WelcomeHorizon />
+      <SunsetHorizon className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(44vh,16rem)] sm:h-[min(32vh,13rem)]" />
 
       <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col px-4 pt-3 sm:px-6 sm:pt-5">
         <div className="relative z-10 shrink-0">

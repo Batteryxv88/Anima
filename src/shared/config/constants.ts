@@ -45,6 +45,7 @@ export const navItems = [
   { to: '/skills', key: 'nav.skills', icon: 'skills' },
   { to: '/homework', key: 'nav.homework', icon: 'homework' },
   { to: '/session', key: 'nav.session', icon: 'session' },
+  { to: '/profile', key: 'nav.profile', icon: 'profile' },
 ] as const
 
 export const localeTags: Record<Locale, string> = {

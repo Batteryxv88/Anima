@@ -3,7 +3,9 @@ import type { Locale } from '@/shared/config'
 export const schools = ['cbt', 'dbt', 'act', 'cft', 'mindfulness', 'behavioral'] as const
 export type School = (typeof schools)[number]
 
-export const situations = [
+/** Moments for skill catalog filters (order matches product copy). */
+export const catalogSituations = [
+  'anxiety',
   'panic',
   'rumination',
   'anger',
@@ -12,8 +14,10 @@ export const situations = [
   'conflict',
   'urge',
   'numb',
-  'crisis',
 ] as const
+export type CatalogSituation = (typeof catalogSituations)[number]
+
+export const situations = [...catalogSituations, 'crisis'] as const
 export type Situation = (typeof situations)[number]
 
 export const fieldKinds = ['text', 'textarea', 'scale', 'choice'] as const
@@ -51,6 +55,21 @@ export function emptyLocalized(): Record<Locale, string> {
 
 export function techniqueCopy(technique: Technique, locale: Locale) {
   return technique.copy[locale] ?? technique.copy.ru
+}
+
+export function techniqueMatchesSearch(
+  technique: Technique,
+  locale: Locale,
+  query: string,
+  meta: { school: string; situations: string[] },
+) {
+  const needle = query.trim().toLowerCase()
+  if (!needle) return true
+  const copy = techniqueCopy(technique, locale)
+  const haystack = [copy.title, copy.when, copy.about, meta.school, ...meta.situations]
+    .join(' ')
+    .toLowerCase()
+  return haystack.includes(needle)
 }
 
 export function fieldLabel(field: TechniqueField, locale: Locale) {

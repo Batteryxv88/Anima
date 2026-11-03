@@ -18,14 +18,24 @@ export {
 } from './stats'
 export { uploadTechniqueCover } from './cover'
 export {
+  schoolAccent,
+  schoolAccentBgSoft,
+  schoolAccentBorderLeft,
+  schoolAccentText,
+  type SchoolAccent,
+} from './school-accent'
+export {
   fieldKinds,
   fieldLabel,
   filledAnswers,
+  catalogSituations,
   situations,
   schools,
   techniqueCopy,
+  techniqueMatchesSearch,
   type FieldAnswers,
   type FieldKind,
+  type CatalogSituation,
   type School,
   type Situation,
   type Technique,

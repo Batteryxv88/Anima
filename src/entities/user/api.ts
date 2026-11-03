@@ -7,6 +7,7 @@ import {
   signInWithPopup,
   signInWithRedirect,
   signOut,
+  type User,
 } from 'firebase/auth'
 import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
 import { getFirebaseAuth, getFirebaseDb } from '@/shared/firebase'
@@ -17,6 +18,32 @@ import { pickRole, useUserStore } from './model'
 
 const googleProvider = new GoogleAuthProvider()
 googleProvider.setCustomParameters({ prompt: 'select_account' })
+
+export const GOOGLE_REDIRECT_FLAG = 'anima-google-redirect'
+
+function markGoogleRedirectPending() {
+  try {
+    sessionStorage.setItem(GOOGLE_REDIRECT_FLAG, '1')
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearGoogleRedirectPending() {
+  try {
+    sessionStorage.removeItem(GOOGLE_REDIRECT_FLAG)
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isGoogleRedirectPending() {
+  try {
+    return sessionStorage.getItem(GOOGLE_REDIRECT_FLAG) === '1'
+  } catch {
+    return false
+  }
+}
 
 function errorCode(error: unknown) {
   return typeof error === 'object' && error && 'code' in error ? String((error as { code: string }).code) : ''
@@ -50,30 +77,67 @@ export async function signUpEmail(email: string, password: string) {
   await createUserWithEmailAndPassword(auth, email, password)
 }
 
-function prefersGoogleRedirect() {
+export function isStandalonePwa() {
   if (typeof window === 'undefined') return false
-  const standalone =
+  return (
     window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as Navigator & { standalone?: boolean }).standalone === true
-  const coarseMobile = window.matchMedia('(pointer: coarse)').matches
-  return standalone || coarseMobile
+  )
 }
 
-export async function signInGoogle() {
+function prefersGoogleRedirect() {
+  return isStandalonePwa()
+}
+
+export type GoogleSignInOutcome = 'redirect-started' | 'signed-in'
+
+export async function signInGoogle(): Promise<GoogleSignInOutcome> {
   const auth = getFirebaseAuth()
   if (!auth) throw new Error('auth.noFirebase')
   if (prefersGoogleRedirect()) {
+    markGoogleRedirectPending()
     await signInWithRedirect(auth, googleProvider)
-    return
+    return 'redirect-started'
   }
   try {
     await signInWithPopup(auth, googleProvider)
+    clearGoogleRedirectPending()
+    return 'signed-in'
   } catch (error) {
     const code = errorCode(error)
     if (code === 'auth/popup-blocked') {
+      markGoogleRedirectPending()
       await signInWithRedirect(auth, googleProvider)
-      return
+      return 'redirect-started'
     }
+    throw error
+  }
+}
+
+async function applySignedInUser(user: User, onSignedIn: (uid: string) => Promise<void>) {
+  useUserStore.getState().setSession({ uid: user.uid, email: user.email })
+  await pullRole(user.uid, user.email)
+  await onSignedIn(user.uid)
+  clearGoogleRedirectPending()
+}
+
+export async function completeAuthRedirect(onSignedIn: (uid: string) => Promise<void>) {
+  const auth = getFirebaseAuth()
+  if (!auth) return null
+  try {
+    const result = await getRedirectResult(auth)
+    const user = result?.user ?? auth.currentUser
+    if (user) {
+      console.info('[auth] Google redirect completed', user.uid)
+      await applySignedInUser(user, onSignedIn)
+      return user
+    }
+    if (isGoogleRedirectPending()) {
+      console.warn('[auth] Google redirect returned without a user session')
+    }
+    return null
+  } catch (error) {
+    console.error('[auth] getRedirectResult failed', error)
     throw error
   }
 }
@@ -94,7 +158,7 @@ export async function pullProfile(uid: string) {
   try {
     const snap = await getDoc(doc(db, 'users', uid))
     if (!snap.exists()) {
-      await pushProfile(uid, { includeDisplayName: true })
+      await pushProfile(uid)
       return
     }
     withCloudLock(() => useUserStore.getState().applyProfile(snap.data()))
@@ -117,8 +181,9 @@ export async function pushProfile(uid: string, options?: { includeDisplayName?: 
     email: (state.email ?? '').trim().toLowerCase(),
     updatedAt: new Date().toISOString(),
   }
-  if (options?.includeDisplayName || state.profileSynced) {
-    payload.displayName = state.displayName
+  const name = state.displayName.trim()
+  if (name && (options?.includeDisplayName || state.profileSynced)) {
+    payload.displayName = name
   }
   await setDoc(doc(db, 'users', uid), payload, { merge: true })
 }
@@ -199,21 +264,37 @@ export function listenAuth(onSignedIn: (uid: string) => Promise<void>, onSignedO
     useUserStore.getState().setAuthReady(true)
     return () => {}
   }
-  void getRedirectResult(auth).catch(() => undefined)
-  return onAuthStateChanged(auth, (user) => {
-    void (async () => {
-      try {
-        if (!user) {
-          useUserStore.getState().setSession(null)
-          onSignedOut?.()
-          return
+
+  let stop = () => {}
+  let redirectHandled = false
+
+  void (async () => {
+    useUserStore.getState().setAuthReady(false)
+    try {
+      const user = await completeAuthRedirect(onSignedIn)
+      redirectHandled = Boolean(user)
+    } catch {
+      // logged in completeAuthRedirect
+    }
+
+    stop = onAuthStateChanged(auth, (user) => {
+      void (async () => {
+        try {
+          if (!user) {
+            useUserStore.getState().setSession(null)
+            onSignedOut?.()
+            return
+          }
+          if (redirectHandled && useUserStore.getState().uid === user.uid) {
+            return
+          }
+          await applySignedInUser(user, onSignedIn)
+        } finally {
+          useUserStore.getState().setAuthReady(true)
         }
-        useUserStore.getState().setSession({ uid: user.uid, email: user.email })
-        await pullRole(user.uid, user.email)
-        await onSignedIn(user.uid)
-      } finally {
-        useUserStore.getState().setAuthReady(true)
-      }
-    })()
-  })
+      })()
+    })
+  })()
+
+  return () => stop()
 }
