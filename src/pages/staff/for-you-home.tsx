@@ -1,3 +1,4 @@
+import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate } from 'react-router-dom'
@@ -11,8 +12,23 @@ import {
 } from '@/entities/for-you'
 import { isStaffRole, useUserStore } from '@/entities/user'
 import { type Locale } from '@/shared/config'
-import { createId, firestoreErrorKey } from '@/shared/lib'
-import { Button, Card, Field, NoticeLayer, PageHeader, TextField, useNotice } from '@/shared/ui'
+import { cn, createId, firestoreErrorKey } from '@/shared/lib'
+import {
+  Button,
+  Card,
+  ConfirmDialog,
+  Field,
+  IconButton,
+  NoticeLayer,
+  PageHeader,
+  TextField,
+  useNotice,
+} from '@/shared/ui'
+
+type PendingConfirm = { title: string; text?: string; run: () => void }
+
+const compactTextLink =
+  'inline-flex min-h-9 items-center gap-1.5 text-sm font-medium text-plum hover:text-plum-deep'
 
 export function StaffForYouHomePage() {
   const { t, i18n } = useTranslation()
@@ -24,6 +40,7 @@ export function StaffForYouHomePage() {
   const [titleRu, setTitleRu] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [confirm, setConfirm] = useState<PendingConfirm | null>(null)
   const { notice, show, hide } = useNotice()
 
   if (!authReady) return null
@@ -34,7 +51,20 @@ export function StaffForYouHomePage() {
   return (
     <>
       <NoticeLayer notice={notice} onClose={hide} />
-      <Link to="/profile" className="mb-3 inline-flex min-h-11 items-center text-sm text-plum lg:hidden">
+      <ConfirmDialog
+        open={Boolean(confirm)}
+        title={confirm?.title ?? ''}
+        text={confirm?.text}
+        confirmLabel={t('common.confirm')}
+        cancelLabel={t('common.cancel')}
+        danger
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => {
+          confirm?.run()
+          setConfirm(null)
+        }}
+      />
+      <Link to="/profile" className="mb-3 inline-flex min-h-9 items-center text-sm text-plum lg:hidden">
         {t('nav.back')}
       </Link>
       <PageHeader title={t('staff.forYouTitle')} text={t('staff.forYouText')} />
@@ -43,20 +73,27 @@ export function StaffForYouHomePage() {
           {groups.length === 0 ? t('staff.forYouEmpty') : t('staff.forYouHasGroups')}
         </p>
         <Button
-          className="mt-4"
+          className="mt-3"
+          size="sm"
           variant={groups.length === 0 ? 'primary' : 'outline'}
           disabled={busy}
           onClick={() => {
-            if (groups.length > 0 && !window.confirm(t('staff.forYouSeedConfirm'))) return
-            setBusy(true)
-            setError('')
-            void seedDefaultForYouContent()
-              .then(() => show(t('staff.savedNotice'), t('staff.forYouSeeded')))
-              .catch((caught) => {
-                console.error('[for-you] seed failed', caught)
-                setError(t(firestoreErrorKey(caught)))
-              })
-              .finally(() => setBusy(false))
+            const run = () => {
+              setBusy(true)
+              setError('')
+              void seedDefaultForYouContent()
+                .then(() => show(t('common.savedNotice'), t('staff.forYouSeeded')))
+                .catch((caught) => {
+                  console.error('[for-you] seed failed', caught)
+                  setError(t(firestoreErrorKey(caught)))
+                })
+                .finally(() => setBusy(false))
+            }
+            if (groups.length > 0) {
+              setConfirm({ title: t('staff.forYouSeedConfirm'), run })
+              return
+            }
+            run()
           }}
         >
           {t('staff.forYouSeed')}
@@ -70,6 +107,7 @@ export function StaffForYouHomePage() {
           </Field>
           {error ? <p className="text-sm text-terra">{error}</p> : null}
           <Button
+            size="sm"
             disabled={busy || !titleRu.trim()}
             onClick={() => {
               setBusy(true)
@@ -83,7 +121,7 @@ export function StaffForYouHomePage() {
                 .then((filled) => saveForYouGroup(filled))
                 .then(() => {
                   setTitleRu('')
-                  show(t('staff.savedNotice'), t('staff.saved'))
+                  show(t('common.savedNotice'), t('staff.forYouGroupSaved'))
                 })
                 .catch((caught) => setError(t(firestoreErrorKey(caught))))
                 .finally(() => setBusy(false))
@@ -95,30 +133,38 @@ export function StaffForYouHomePage() {
       </Card>
       <div className="grid gap-3">
         {groups.map((group) => (
-          <Card key={group.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <Link to={`/staff/for-you/${group.id}`} className="font-medium text-plum">
-                {forYouText(group.title, locale)}
+          <Card key={group.id} className="grid gap-2">
+            <div className="flex items-start gap-1">
+              <Link to={`/staff/for-you/${group.id}`} className="min-w-0 flex-1 text-left hover:opacity-90">
+                <p className="font-medium text-plum">{forYouText(group.title, locale)}</p>
+                <p className="mt-0.5 text-sm text-muted">
+                  {t('staff.forYouArticleCount', { count: countInGroup(group.id) })}
+                </p>
               </Link>
-              <p className="mt-1 text-sm text-muted">
-                {t('staff.forYouArticleCount', { count: countInGroup(group.id) })}
-              </p>
+              <IconButton
+                variant="danger"
+                disabled={busy}
+                aria-label={t('staff.deleteGroup')}
+                onClick={() =>
+                  setConfirm({
+                    title: t('staff.forYouConfirmDeleteGroup'),
+                    run: () => {
+                      setBusy(true)
+                      void deleteForYouGroup(group.id)
+                        .then(() => show(t('staff.forYouGroupDeletedTitle'), t('staff.forYouGroupDeletedHint')))
+                        .catch((caught) => setError(t(firestoreErrorKey(caught))))
+                        .finally(() => setBusy(false))
+                    },
+                  })
+                }
+              >
+                <Trash2 size={18} strokeWidth={1.75} aria-hidden />
+              </IconButton>
             </div>
-            <Button
-              variant="outline"
-              className="shrink-0 text-terra"
-              disabled={busy}
-              onClick={() => {
-                if (!window.confirm(t('staff.forYouConfirmDeleteGroup'))) return
-                setBusy(true)
-                void deleteForYouGroup(group.id)
-                  .then(() => show(t('staff.deletedNotice'), t('staff.forYouGroupDeleted')))
-                  .catch((caught) => setError(t(firestoreErrorKey(caught))))
-                  .finally(() => setBusy(false))
-              }}
-            >
-              {t('staff.deleteGroup')}
-            </Button>
+            <Link to={`/staff/for-you/${group.id}/new`} className={cn(compactTextLink, 'w-fit')}>
+              <Plus size={16} strokeWidth={2} aria-hidden />
+              {t('staff.addArticle')}
+            </Link>
           </Card>
         ))}
       </div>

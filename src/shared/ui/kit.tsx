@@ -47,16 +47,19 @@ export function Card({
 }
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger'
+type ButtonSize = 'default' | 'sm'
 
 export function Button({
   variant = 'primary',
+  size = 'default',
   className,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: ButtonSize }) {
   return (
     <button
       className={cn(
-        'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition-colors duration-150',
+        'inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150',
+        size === 'sm' ? 'min-h-9 rounded-lg px-3 text-xs' : 'min-h-11 rounded-xl px-4 text-sm',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/50 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
         'disabled:cursor-not-allowed disabled:opacity-50',
         variant === 'primary' &&
@@ -67,6 +70,29 @@ export function Button({
         variant === 'outline' && 'border border-line bg-card text-ink hover:border-plum/35',
         variant === 'danger' &&
           'border border-terra/50 bg-transparent text-terra hover:bg-terra/10',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+type IconButtonVariant = 'ghost' | 'danger'
+
+export function IconButton({
+  variant = 'ghost',
+  className,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: IconButtonVariant }) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        'inline-flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-150',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/50 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+        'disabled:cursor-not-allowed disabled:opacity-50',
+        variant === 'ghost' && 'text-muted hover:bg-card hover:text-ink',
+        variant === 'danger' && 'text-terra hover:bg-terra/10',
         className,
       )}
       {...props}
@@ -651,6 +677,66 @@ export function NoticeDialog({
         <Button className="mt-6 w-full" onClick={() => setPhase('leave')}>
           {action}
         </Button>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+export function ConfirmDialog({
+  open,
+  title,
+  text,
+  confirmLabel,
+  cancelLabel,
+  onConfirm,
+  onCancel,
+  danger,
+}: {
+  open: boolean
+  title: string
+  text?: string
+  confirmLabel: string
+  cancelLabel: string
+  onConfirm: () => void
+  onCancel: () => void
+  danger?: boolean
+}) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onCancel()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onCancel])
+
+  if (typeof document === 'undefined' || !open) return null
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-5 backdrop-blur-[3px] anima-overlay-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="anima-confirm-title"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-[20rem] rounded-[1.6rem] border border-line bg-card px-6 pb-6 pt-7 text-center shadow-[0_24px_48px_-28px_rgba(48,43,53,0.35)] anima-panel-in"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <p id="anima-confirm-title" className="text-lg font-medium tracking-tight text-ink">
+          {title}
+        </p>
+        {text ? <p className="mt-2 text-sm leading-relaxed text-muted">{text}</p> : null}
+        <div className="mt-6 grid gap-2">
+          <Button variant={danger ? 'danger' : 'primary'} className="w-full" onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
+          <Button variant="outline" className="w-full" onClick={onCancel}>
+            {cancelLabel}
+          </Button>
+        </div>
       </div>
     </div>,
     document.body,

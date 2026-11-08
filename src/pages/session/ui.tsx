@@ -1,10 +1,65 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useCareStore, useShareStore } from '@/entities/care'
+import { ChevronDown } from 'lucide-react'
+import { useCareStore, useShareStore, type Practice } from '@/entities/care'
 import { localeTags, type Locale } from '@/shared/config'
-import { formatStamp, isThisWeek, weekRangeLabel } from '@/shared/lib'
+import { cn, formatStamp, isThisWeek, startOfWeek, todayId, weekRangeLabel } from '@/shared/lib'
 import { Button, Card, PageHeader, TextArea } from '@/shared/ui'
 import { WeekMarks } from '@/widgets/week-marks'
 import { WeekWork } from '@/widgets/week-work'
+
+function pastPracticeWeeks(practices: Practice[]) {
+  const groups = new Map<string, Practice[]>()
+  for (const item of practices) {
+    const day = item.at.slice(0, 10)
+    if (!day || isThisWeek(day)) continue
+    const start = todayId(startOfWeek(new Date(`${day}T12:00:00`)))
+    const list = groups.get(start) ?? []
+    list.push(item)
+    groups.set(start, list)
+  }
+  return [...groups.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1))
+}
+
+function EarlierWeeks({ practices }: { practices: Practice[] }) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language as Locale
+  const weeks = pastPracticeWeeks(practices)
+  const [openWeek, setOpenWeek] = useState<string | null>(null)
+  if (weeks.length === 0) return null
+
+  return (
+    <Card className="print:hidden">
+      <h2 className="text-xs tracking-wide text-gold">{t('session.earlier')}</h2>
+      <ul className="mt-3 min-w-0">
+        {weeks.map(([start, items]) => {
+          const open = openWeek === start
+          return (
+            <li key={start} className="min-w-0 border-b border-line/80 last:border-b-0">
+              <button
+                type="button"
+                className="flex min-h-11 w-full min-w-0 items-center gap-3 py-2 text-left"
+                aria-expanded={open}
+                onClick={() => setOpenWeek(open ? null : start)}
+              >
+                <span className="min-w-0 flex-1 break-words text-sm font-medium">
+                  {weekRangeLabel(localeTags[locale], new Date(`${start}T12:00:00`))}
+                </span>
+                <span className="shrink-0 text-sm text-muted">{items.length}</span>
+                <ChevronDown
+                  size={16}
+                  strokeWidth={1.75}
+                  className={cn('shrink-0 text-muted transition-transform duration-300', open && 'rotate-180')}
+                />
+              </button>
+              {open ? <WeekWork assignments={[]} practices={items} /> : null}
+            </li>
+          )
+        })}
+      </ul>
+    </Card>
+  )
+}
 
 export function SessionPage() {
   const { t, i18n } = useTranslation()
@@ -100,6 +155,7 @@ export function SessionPage() {
           </Card>
         ) : null}
         {weekEmpty ? <p className="text-sm leading-relaxed text-muted">{t('session.empty')}</p> : null}
+        <EarlierWeeks practices={practices} />
       </div>
     </>
   )

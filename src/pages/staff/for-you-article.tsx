@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
@@ -10,7 +11,19 @@ import {
   useForYouStore,
 } from '@/entities/for-you'
 import { isStaffRole, useUserStore } from '@/entities/user'
-import { Button, Card, ChoiceButton, Field, FormatArea, NoticeLayer, PageHeader, TextField, useNotice } from '@/shared/ui'
+import {
+  Button,
+  Card,
+  ChoiceButton,
+  ConfirmDialog,
+  Field,
+  FormatArea,
+  IconButton,
+  NoticeLayer,
+  PageHeader,
+  TextField,
+  useNotice,
+} from '@/shared/ui'
 
 export function StaffForYouArticlePage() {
   const { groupId, articleId } = useParams()
@@ -33,6 +46,7 @@ export function StaffForYouArticlePage() {
   const [busy, setBusy] = useState(false)
   const [translating, setTranslating] = useState(false)
   const [error, setError] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const { notice, show, hide } = useNotice()
 
   useEffect(() => {
@@ -67,9 +81,12 @@ export function StaffForYouArticlePage() {
         next = await fillForYouTranslations(draft)
         setDraft(next)
       }
-      const id = await saveForYouArticle(next)
-      show(t('staff.savedNotice'), t('staff.saved'))
-      if (isNew) navigate(`/staff/for-you/${groupId}/${id}`, { replace: true })
+      await saveForYouArticle(next)
+      if (isNew) {
+        navigate(`/staff/for-you/${groupId}`, { replace: true, state: { articleSaved: true } })
+      } else {
+        show(t('common.savedNotice'), t('staff.forYouArticleSaved'))
+      }
     } catch {
       setError(t('staff.failed'))
     } finally {
@@ -81,13 +98,44 @@ export function StaffForYouArticlePage() {
   return (
     <>
       <NoticeLayer notice={notice} onClose={hide} />
+      <ConfirmDialog
+        open={confirmDelete}
+        title={t('staff.forYouConfirmDeleteArticle')}
+        confirmLabel={t('staff.deleteArticle')}
+        cancelLabel={t('common.cancel')}
+        danger
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => {
+          setConfirmDelete(false)
+          if (!articleId || articleId === 'new') return
+          setBusy(true)
+          void deleteForYouArticle(articleId)
+            .then(() => navigate(`/staff/for-you/${groupId}`, { state: { articleDeleted: true } }))
+            .catch(() => setError(t('staff.failed')))
+            .finally(() => setBusy(false))
+        }}
+      />
       <Link
         to={`/staff/for-you/${groupId}`}
-        className="mb-3 inline-flex min-h-11 items-center text-sm text-plum lg:hidden"
+        className="mb-3 inline-flex min-h-9 items-center text-sm text-plum lg:hidden"
       >
         {t('nav.back')}
       </Link>
-      <PageHeader title={isNew ? t('staff.addArticle') : t('staff.forYouEditArticle')} />
+      <PageHeader
+        title={isNew ? t('staff.addArticle') : t('staff.forYouEditArticle')}
+        action={
+          !isNew && articleId ? (
+            <IconButton
+              variant="danger"
+              disabled={busy}
+              aria-label={t('staff.deleteArticle')}
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 size={18} strokeWidth={1.75} aria-hidden />
+            </IconButton>
+          ) : null
+        }
+      />
       <Card>
         <div className="grid gap-3">
           <Field label={t('staff.title')}>
@@ -111,30 +159,13 @@ export function StaffForYouArticlePage() {
           </ChoiceButton>
           {error ? <p className="text-sm text-terra">{error}</p> : null}
           <div className="flex flex-wrap gap-2">
-            <Button disabled={busy} onClick={() => void save(false)}>
+            <Button size="sm" disabled={busy} onClick={() => void save(false)}>
               {t('staff.saved')}
             </Button>
-            <Button variant="outline" disabled={busy} onClick={() => void save(true)}>
+            <Button size="sm" variant="outline" disabled={busy} onClick={() => void save(true)}>
               {translating ? t('staff.translating') : t('staff.forYouSaveTranslate')}
             </Button>
           </div>
-          {!isNew && articleId ? (
-            <Button
-              variant="outline"
-              className="text-terra"
-              disabled={busy}
-              onClick={() => {
-                if (!window.confirm(t('staff.forYouConfirmDeleteArticle'))) return
-                setBusy(true)
-                void deleteForYouArticle(articleId)
-                  .then(() => navigate(`/staff/for-you/${groupId}`))
-                  .catch(() => setError(t('staff.failed')))
-                  .finally(() => setBusy(false))
-              }}
-            >
-              {t('staff.deleteArticle')}
-            </Button>
-          ) : null}
         </div>
       </Card>
     </>
