@@ -1,4 +1,3 @@
-import { ArrowRight, Brain, CalendarCheck, Flower2, Heart } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -15,49 +14,58 @@ import { activeForYouArticles, forYouText, pickDailyForYouArticle, useForYouStor
 import { isStaffRole, useUserStore } from '@/entities/user'
 import { APP_NAME, type Locale } from '@/shared/config'
 import { cn, todayId } from '@/shared/lib'
-import { SunsetHorizon } from '@/shared/ui'
+import {
+  BrainMark,
+  CalendarMark,
+  ForYouSunsetArt,
+  HeartMark,
+  LotusMark,
+  SunsetHorizon,
+} from '@/shared/ui'
+
+const dayCardWash =
+  'relative overflow-hidden rounded-2xl border border-peach/25 anima-sunset-gradient shadow-sm shadow-plum/5'
 
 const tiles = [
   {
     to: '/skills?group=mindfulness',
-    icon: Flower2,
+    icon: LotusMark,
     titleKey: 'today.tileMindfulness',
     className:
-      'bg-lavender/55 shadow-sm shadow-plum/5 hover:bg-lavender/65 dark:bg-lavender/28 dark:hover:bg-lavender/34',
-    iconClass: 'text-plum dark:text-lavender',
+      'bg-lavender/70 shadow-sm shadow-plum/5 hover:bg-lavender/80 dark:bg-lavender/32 dark:hover:bg-lavender/40',
+    iconClass: '',
   },
   {
     to: '/skills?group=cognitive',
-    icon: Brain,
+    icon: BrainMark,
     titleKey: 'today.tileCognitive',
-    className: 'bg-peach/55 shadow-sm shadow-plum/5 hover:bg-peach/70 dark:bg-peach/22 dark:hover:bg-peach/30',
-    iconClass: 'text-coral',
+    className: 'bg-peach/70 shadow-sm shadow-plum/5 hover:bg-peach/82 dark:bg-peach/26 dark:hover:bg-peach/34',
+    iconClass: '',
   },
   {
     to: '/homework',
-    icon: CalendarCheck,
+    icon: CalendarMark,
     titleKey: 'today.tileHomework',
-    className: 'bg-sky/50 shadow-sm shadow-plum/5 hover:bg-sky/62 dark:bg-sky/22 dark:hover:bg-sky/30',
-    iconClass: 'text-plum dark:text-sky',
+    className: 'bg-sky/65 shadow-sm shadow-plum/5 hover:bg-sky/78 dark:bg-sky/26 dark:hover:bg-sky/34',
+    iconClass: '',
   },
   {
     to: '/journal',
-    icon: Heart,
+    icon: HeartMark,
     titleKey: 'today.tileJournal',
     className:
-      'bg-coral/22 shadow-sm shadow-plum/5 hover:bg-coral/30 dark:bg-coral/18 dark:hover:bg-coral/24',
-    iconClass: 'text-coral',
+      'bg-coral/30 shadow-sm shadow-plum/5 hover:bg-coral/40 dark:bg-coral/22 dark:hover:bg-coral/30',
+    iconClass: '',
   },
 ] as const
 
-export function TodayHubGreeting({ dateLabel }: { dateLabel: string }) {
+export function TodayHubGreeting() {
   const { t } = useTranslation()
 
   return (
     <header className="mb-4 lg:hidden">
       <p className="text-[1.85rem] font-medium leading-tight tracking-tight text-ink">{APP_NAME}</p>
       <p className="mt-1 text-base leading-snug text-muted">{t('today.greetingLead')}</p>
-      <p className="mt-2 text-sm text-muted">{dateLabel}</p>
     </header>
   )
 }
@@ -95,19 +103,18 @@ export function TodayForYouCard({ className }: { className?: string }) {
     <Link
       to={`/today/for-you/${daily.id}`}
       className={cn(
-        'relative mb-4 block min-h-[9.5rem] overflow-hidden rounded-[1.25rem] border border-peach/25 p-5 anima-sunset-gradient transition-opacity hover:opacity-95 lg:hidden',
+        'relative mb-4 block overflow-hidden rounded-[1.25rem] transition-opacity hover:opacity-95 lg:hidden',
         className,
       )}
     >
-      <p className="text-xs font-medium uppercase tracking-wide text-muted">{t('today.forYou.title')}</p>
-      {groupLabel ? (
-        <p className="mt-1 text-xs text-plum">{groupLabel}</p>
-      ) : null}
-      <p className="mt-3 pr-12 text-lg font-medium leading-snug text-ink">{teaser}</p>
-      <span className="absolute bottom-5 right-5 flex size-10 items-center justify-center rounded-full bg-card/80 text-plum shadow-sm">
-        <ArrowRight size={20} strokeWidth={1.75} aria-hidden />
-      </span>
-      <SunsetHorizon className="pointer-events-none absolute inset-x-0 bottom-0 h-16 text-coral opacity-90" />
+      <ForYouSunsetArt />
+      <div className="relative z-10 min-h-[9.75rem] p-5 pr-[34%]">
+        <p className="text-xs font-medium uppercase tracking-wide text-ink/70 dark:text-white/70">
+          {t('today.forYou.title')}
+        </p>
+        {groupLabel ? <p className="mt-1 text-xs text-plum dark:text-lavender">{groupLabel}</p> : null}
+        <p className="mt-3 text-lg font-medium leading-snug text-ink dark:text-white">{teaser}</p>
+      </div>
     </Link>
   )
 }
@@ -128,7 +135,7 @@ export function TodayQuickTiles({ className }: { className?: string }) {
               tile.className,
             )}
           >
-            <Icon size={22} strokeWidth={1.75} className={cn('shrink-0', tile.iconClass)} aria-hidden />
+            <Icon className={tile.iconClass} />
             <span className="text-sm font-medium leading-snug text-ink">{t(tile.titleKey)}</span>
           </Link>
         )
@@ -149,21 +156,19 @@ export function TodayDayCardBanner({ className }: { className?: string }) {
   if (cards.length === 0) {
     if (!isStaffRole(role)) return null
     return (
-      <Link
-        to="/staff/day-cards"
-        className={cn('mb-4 block rounded-2xl border border-dashed border-plum/40 bg-plum/8 p-5', className)}
-      >
-        <p className="text-sm font-medium text-plum">{t('cards.title')}</p>
-        <p className="mt-2 text-sm leading-relaxed text-muted">{t('cards.staffEmpty')}</p>
+      <Link to="/staff/day-cards" className={cn('mb-4 block border-dashed p-5', dayCardWash, className)}>
+        <p className="relative z-10 text-sm font-medium text-plum">{t('cards.title')}</p>
+        <p className="relative z-10 mt-2 text-sm leading-relaxed text-muted">{t('cards.staffEmpty')}</p>
+        <SunsetHorizon className="absolute inset-x-0 bottom-0 h-12 text-coral opacity-80" />
       </Link>
     )
   }
 
   if (cards.length > 1) {
     return (
-      <section className={cn('mb-4 rounded-2xl border border-line bg-card p-5', className)}>
-        <p className="text-sm font-medium text-plum">{t('cards.title')}</p>
-        <div className="mt-3 grid gap-2">
+      <section className={cn('mb-4 p-5', dayCardWash, className)}>
+        <p className="relative z-10 text-sm font-medium text-plum">{t('cards.title')}</p>
+        <div className="relative z-10 mt-3 grid gap-2">
           {cards.map((card) => {
             const copy = dayCardCopy(card, locale)
             const count = repeaterRowCount(
@@ -175,7 +180,11 @@ export function TodayDayCardBanner({ className }: { className?: string }) {
               ? `/cards/${card.id}?from=today`
               : `/cards/${card.id}?from=today&section=${repeater?.id ?? card.sections[0]?.id ?? ''}`
             return (
-              <Link key={card.id} to={to} className="rounded-xl border border-line px-3 py-2.5 hover:border-plum/35">
+              <Link
+                key={card.id}
+                to={to}
+                className="rounded-xl border border-peach/30 bg-card/55 px-3 py-2.5 hover:border-plum/35"
+              >
                 <p className="text-sm font-medium text-ink">{copy.title}</p>
                 <p className="mt-0.5 text-xs text-muted">
                   {count ? t('cards.progressBanner', { count }) : t('cards.emptyBanner')}
@@ -184,6 +193,7 @@ export function TodayDayCardBanner({ className }: { className?: string }) {
             )
           })}
         </div>
+        <SunsetHorizon className="absolute inset-x-0 bottom-0 h-12 text-coral opacity-80" />
       </section>
     )
   }
@@ -202,14 +212,12 @@ export function TodayDayCardBanner({ className }: { className?: string }) {
     count === 0 ? t('cards.emptyBanner') : eveningEmpty ? t('cards.progressBanner', { count }) : t('cards.doneBanner')
 
   return (
-    <Link
-      to={ctaTo}
-      className={cn('mb-4 block rounded-2xl border border-line bg-card p-5 shadow-sm shadow-plum/5 hover:border-plum/30', className)}
-    >
-      <p className="text-xs font-medium uppercase tracking-wide text-plum">{t('cards.title')}</p>
-      <p className="mt-1 text-lg font-medium text-ink">{copy.title}</p>
-      <p className="mt-2 text-sm leading-relaxed text-muted">{lead}</p>
-      <p className="mt-3 text-sm font-medium text-plum">{cta}</p>
+    <Link to={ctaTo} className={cn('mb-4 block p-5 hover:border-plum/30', dayCardWash, className)}>
+      <p className="relative z-10 text-xs font-medium uppercase tracking-wide text-plum">{t('cards.title')}</p>
+      <p className="relative z-10 mt-1 text-lg font-medium text-ink">{copy.title}</p>
+      <p className="relative z-10 mt-2 text-sm leading-relaxed text-muted">{lead}</p>
+      <p className="relative z-10 mt-3 text-sm font-medium text-plum">{cta}</p>
+      <SunsetHorizon className="absolute inset-x-0 bottom-0 h-14 text-coral opacity-80" />
     </Link>
   )
 }

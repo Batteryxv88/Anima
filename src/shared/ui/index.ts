@@ -27,4 +27,6 @@ export {
 } from './kit'
 export type { NoticeCopy } from './kit'
 export { QrMark } from './qr'
+export { ForYouSunsetArt } from './for-you-art'
 export { SunsetBanner, SunsetHorizon } from './horizon'
+export { BrainMark, CalendarMark, HeartMark, LotusMark } from './tile-marks'

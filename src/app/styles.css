@@ -6,7 +6,8 @@
 
 @theme {
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
-  --color-canvas: #fff7f1;
+  --color-canvas: #fff8f1;
+  --color-canvas-alt: #f7f6fc;
   --color-card: #fffcf9;
   --color-ink: #302b35;
   --color-muted: #6b636f;
@@ -26,7 +27,8 @@
 
 @layer base {
   html.dark {
-    --color-canvas: #211f2a;
+    --color-canvas: #1f1d2b;
+    --color-canvas-alt: #24233d;
     --color-card: #2d2935;
     --color-ink: #f7eef0;
     --color-muted: #b8afb8;
@@ -45,9 +47,15 @@
   }
 
   html {
+    --anima-canvas-mix: linear-gradient(
+      180deg,
+      var(--color-canvas-alt) 0%,
+      var(--color-canvas) 42%,
+      var(--color-canvas) 100%
+    );
     font-family: var(--font-sans);
     font-size: 16.5px;
-    background: var(--color-canvas);
+    background: var(--anima-canvas-mix);
     color: var(--color-ink);
   }
 
@@ -58,7 +66,7 @@
   body {
     margin: 0;
     min-height: 100dvh;
-    background: var(--color-canvas);
+    background: var(--anima-canvas-mix);
   }
 
   #root {
@@ -213,13 +221,7 @@
 }
 
 .anima-shell-bg {
-  background:
-    radial-gradient(
-      ellipse 120% 80% at 50% -20%,
-      color-mix(in srgb, var(--color-peach) 12%, transparent),
-      transparent 55%
-    ),
-    var(--color-canvas);
+  background: var(--anima-canvas-mix);
 }
 
 .anima-sunset-gradient {

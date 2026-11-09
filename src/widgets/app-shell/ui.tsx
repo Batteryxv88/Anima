@@ -152,7 +152,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="mx-auto w-full min-w-0 max-w-xl px-4 py-6 pb-24 lg:max-w-4xl lg:pb-10 md:max-w-3xl">
+        <main className="mx-auto w-full min-w-0 max-w-xl px-4 pt-4 pb-24 lg:max-w-4xl lg:pt-6 lg:pb-10 md:max-w-3xl">
           {needName ? (
             <NameStep onSaved={() => nameNotice.show(t('common.savedNotice'), t('name.saved'))} />
           ) : (

@@ -2,15 +2,13 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useCareStore, useShareStore } from '@/entities/care'
-import { localeTags, type Locale } from '@/shared/config'
-import { formatDay, normalizeScaleValue, SCALE_DEFAULT, scaleWordKey, todayId } from '@/shared/lib'
+import { normalizeScaleValue, SCALE_DEFAULT, scaleWordKey, todayId } from '@/shared/lib'
 import { Button, Card, NoticeLayer, PageHeader, ScaleTap, useNotice } from '@/shared/ui'
 import { HomeworkBlock } from '@/widgets/homework-block'
 import { TodayDayCardBanner, TodayForYouCard, TodayHubGreeting, TodayQuickTiles } from '@/widgets/today-hub'
 
 export function TodayPage() {
-  const { t, i18n } = useTranslation()
-  const locale = i18n.language as Locale
+  const { t } = useTranslation()
   const saved = useCareStore((state) => state.checkIns.find((item) => item.date === todayId()))
   const saveCheckIn = useCareStore((state) => state.saveCheckIn)
   const isSpecialist = useShareStore((state) => state.therapistLinks.length > 0)
@@ -23,12 +21,12 @@ export function TodayPage() {
     <>
       <NoticeLayer notice={notice} onClose={hide} />
       <div className="hidden lg:block">
-        <PageHeader title={t('today.title')} text={formatDay(todayId(), localeTags[locale])} />
+        <PageHeader title={t('today.title')} />
       </div>
-      <TodayHubGreeting dateLabel={formatDay(todayId(), localeTags[locale])} />
+      <TodayHubGreeting />
       <TodayForYouCard />
-      <TodayDayCardBanner />
       <TodayQuickTiles className="mb-4" />
+      <TodayDayCardBanner />
       <div className="grid gap-4">
         {isSpecialist ? (
           <Link to="/cabinet" className="rounded-2xl border border-plum/35 bg-plum/10 px-5 py-4">
