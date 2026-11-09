@@ -1,49 +1,11 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, ChevronDown } from 'lucide-react'
 import type { Practice } from '@/entities/care'
 import { AnswerList, filledAnswers, getTechnique, techniqueCopy, useTechniqueStore } from '@/entities/technique'
 import { localeTags, type Locale } from '@/shared/config'
 import { cn, formatStamp } from '@/shared/lib'
-
-function Fold({ open, children }: { open: boolean; children: ReactNode }) {
-  const outer = useRef<HTMLDivElement>(null)
-  const inner = useRef<HTMLDivElement>(null)
-
-  useLayoutEffect(() => {
-    const el = outer.current
-    const content = inner.current
-    if (!el || !content) return
-    const from = el.getBoundingClientRect().height
-    const target = open ? content.scrollHeight : 0
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduce || Math.abs(from - target) < 1) {
-      el.style.height = open ? 'auto' : ''
-      return
-    }
-    el.style.height = `${from}px`
-    const anim = el.animate([{ height: `${from}px` }, { height: `${target}px` }], {
-      duration: 380,
-      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-    })
-    anim.onfinish = () => {
-      el.style.height = open ? 'auto' : ''
-    }
-    return () => {
-      const current = el.getBoundingClientRect().height
-      anim.cancel()
-      el.style.height = `${current}px`
-    }
-  }, [open])
-
-  return (
-    <div ref={outer} className="anima-fold">
-      <div ref={inner} inert={open ? undefined : true}>
-        {children}
-      </div>
-    </div>
-  )
-}
+import { Fold } from '@/shared/ui'
 
 function Mark({ done }: { done: boolean }) {
   if (done) {

@@ -1,4 +1,6 @@
 export { StaffTechniquePage } from './catalog'
+export { StaffDayCardEditorPage } from './day-cards-editor'
+export { StaffDayCardsHomePage } from './day-cards-home'
 export { StaffForYouArticlePage } from './for-you-article'
 export { StaffForYouGroupPage } from './for-you-group'
 export { StaffForYouHomePage } from './for-you-home'

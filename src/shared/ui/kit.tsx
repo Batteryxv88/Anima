@@ -1,4 +1,5 @@
-import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { forwardRef, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -97,6 +98,134 @@ export function IconButton({
       )}
       {...props}
     />
+  )
+}
+
+const foldEase = 'cubic-bezier(0.4, 0, 0.2, 1)'
+
+export function Fold({
+  open,
+  children,
+  duration = 380,
+}: {
+  open: boolean
+  children: ReactNode
+  duration?: number
+}) {
+  const outer = useRef<HTMLDivElement>(null)
+  const inner = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const el = outer.current
+    const content = inner.current
+    if (!el || !content) return
+    const from = el.getBoundingClientRect().height
+    const target = open ? content.scrollHeight : 0
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduce || Math.abs(from - target) < 1) {
+      el.style.height = open ? 'auto' : ''
+      content.style.opacity = ''
+      content.style.transform = ''
+      return
+    }
+    el.style.height = `${from}px`
+    const heightAnim = el.animate([{ height: `${from}px` }, { height: `${target}px` }], {
+      duration,
+      easing: foldEase,
+    })
+    const fadeAnim = content.animate(
+      open
+        ? [
+            { opacity: 0, transform: 'translateY(-6px)', offset: 0 },
+            { opacity: 0, offset: 0.22 },
+            { opacity: 1, transform: 'translateY(0px)', offset: 1 },
+          ]
+        : [
+            { opacity: 1, transform: 'translateY(0px)', offset: 0 },
+            { opacity: 0, transform: 'translateY(-4px)', offset: 0.48 },
+            { opacity: 0, transform: 'translateY(-4px)', offset: 1 },
+          ],
+      { duration, easing: foldEase, fill: 'forwards' },
+    )
+    heightAnim.onfinish = () => {
+      el.style.height = open ? 'auto' : ''
+      if (open) {
+        content.style.opacity = ''
+        content.style.transform = ''
+        fadeAnim.cancel()
+      }
+    }
+    return () => {
+      const current = el.getBoundingClientRect().height
+      heightAnim.cancel()
+      fadeAnim.cancel()
+      el.style.height = `${current}px`
+    }
+  }, [duration, open])
+
+  return (
+    <div ref={outer} className="anima-fold">
+      <div ref={inner} inert={open ? undefined : true}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+export function HelpFold({
+  title,
+  help,
+  children,
+}: {
+  title?: string
+  help?: string
+  children?: ReactNode
+}) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const helpText = help?.trim() ?? ''
+  const heading = title?.trim() ?? ''
+  if (!heading && !helpText && !children) return null
+  return (
+    <div>
+      {heading || helpText ? (
+        <div className={children ? 'mb-2' : undefined}>
+          <div className="flex items-start gap-1">
+            {heading ? (
+              <p className={`min-w-0 flex-1 text-sm text-ink ${helpText ? 'pt-2' : ''}`}>{heading}</p>
+            ) : (
+              <span className="min-w-0 flex-1" />
+            )}
+            {helpText ? (
+              <IconButton
+                className="pointer-events-auto size-11"
+                aria-label={open ? t('cards.hideMore') : t('cards.more')}
+                aria-expanded={open}
+                onClick={() => setOpen((current) => !current)}
+              >
+                <ChevronDown
+                  size={18}
+                  strokeWidth={1.75}
+                  aria-hidden
+                  className={cn(
+                    'transition-transform duration-[560ms] ease-[cubic-bezier(0.4,0,0.2,1)]',
+                    open && 'rotate-180',
+                  )}
+                />
+              </IconButton>
+            ) : null}
+          </div>
+          {helpText ? (
+            <Fold open={open} duration={560}>
+              <div className="mt-1 text-sm leading-relaxed text-muted">
+                <RichText text={helpText} />
+              </div>
+            </Fold>
+          ) : null}
+        </div>
+      ) : null}
+      {children}
+    </div>
   )
 }
 
@@ -308,17 +437,17 @@ export function FormatArea({
     <div>
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="text-sm text-muted">{label}</span>
-        <div className="flex gap-1">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg text-sm font-medium text-muted hover:bg-card hover:text-ink"
+            className="text-sm font-medium leading-none text-muted hover:text-ink"
             onClick={() => wrap('**')}
           >
             {boldLabel}
           </button>
           <button
             type="button"
-            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg text-sm italic text-muted hover:bg-card hover:text-ink"
+            className="text-sm italic leading-none text-muted hover:text-ink"
             onClick={() => wrap('*')}
           >
             {italicLabel}

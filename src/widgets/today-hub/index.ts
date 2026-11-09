@@ -1,1 +1,1 @@
-export { TodayForYouCard, TodayHubGreeting, TodayQuickTiles } from './ui'
+export { TodayDayCardBanner, TodayForYouCard, TodayHubGreeting, TodayQuickTiles } from './ui'

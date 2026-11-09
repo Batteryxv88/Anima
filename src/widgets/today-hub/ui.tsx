@@ -2,10 +2,19 @@ import { ArrowRight, Brain, CalendarCheck, Flower2, Heart } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { useCareStore } from '@/entities/care'
+import {
+  activeDayCards,
+  dayCardCopy,
+  eveningIsEmpty,
+  firstRepeaterSection,
+  repeaterRowCount,
+  useDayCardStore,
+} from '@/entities/day-card'
 import { activeForYouArticles, forYouText, pickDailyForYouArticle, useForYouStore } from '@/entities/for-you'
 import { isStaffRole, useUserStore } from '@/entities/user'
 import { APP_NAME, type Locale } from '@/shared/config'
-import { cn } from '@/shared/lib'
+import { cn, todayId } from '@/shared/lib'
 import { SunsetHorizon } from '@/shared/ui'
 
 const tiles = [
@@ -125,5 +134,82 @@ export function TodayQuickTiles({ className }: { className?: string }) {
         )
       })}
     </div>
+  )
+}
+
+export function TodayDayCardBanner({ className }: { className?: string }) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language as Locale
+  const role = useUserStore((state) => state.role)
+  const list = useDayCardStore((state) => state.list)
+  const entries = useCareStore((state) => state.dayCardEntries)
+  const cards = activeDayCards(list)
+  const today = todayId()
+
+  if (cards.length === 0) {
+    if (!isStaffRole(role)) return null
+    return (
+      <Link
+        to="/staff/day-cards"
+        className={cn('mb-4 block rounded-2xl border border-dashed border-plum/40 bg-plum/8 p-5', className)}
+      >
+        <p className="text-sm font-medium text-plum">{t('cards.title')}</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted">{t('cards.staffEmpty')}</p>
+      </Link>
+    )
+  }
+
+  if (cards.length > 1) {
+    return (
+      <section className={cn('mb-4 rounded-2xl border border-line bg-card p-5', className)}>
+        <p className="text-sm font-medium text-plum">{t('cards.title')}</p>
+        <div className="mt-3 grid gap-2">
+          {cards.map((card) => {
+            const copy = dayCardCopy(card, locale)
+            const count = repeaterRowCount(
+              card,
+              entries.find((item) => item.dayCardId === card.id && item.date === today),
+            )
+            const repeater = firstRepeaterSection(card)
+            const to = count
+              ? `/cards/${card.id}?from=today`
+              : `/cards/${card.id}?from=today&section=${repeater?.id ?? card.sections[0]?.id ?? ''}`
+            return (
+              <Link key={card.id} to={to} className="rounded-xl border border-line px-3 py-2.5 hover:border-plum/35">
+                <p className="text-sm font-medium text-ink">{copy.title}</p>
+                <p className="mt-0.5 text-xs text-muted">
+                  {count ? t('cards.progressBanner', { count }) : t('cards.emptyBanner')}
+                </p>
+              </Link>
+            )
+          })}
+        </div>
+      </section>
+    )
+  }
+
+  const card = cards[0]
+  const copy = dayCardCopy(card, locale)
+  const entry = entries.find((item) => item.dayCardId === card.id && item.date === today)
+  const count = repeaterRowCount(card, entry)
+  const eveningEmpty = eveningIsEmpty(card, entry)
+  const repeater = firstRepeaterSection(card)
+  const recordTo = `/cards/${card.id}?from=today&section=${repeater?.id ?? card.sections[0]?.id ?? ''}`
+  const openTo = `/cards/${card.id}?from=today`
+  const ctaTo = count === 0 ? recordTo : openTo
+  const cta = count === 0 ? t('cards.record') : eveningEmpty ? t('cards.continue') : t('cards.openCard')
+  const lead =
+    count === 0 ? t('cards.emptyBanner') : eveningEmpty ? t('cards.progressBanner', { count }) : t('cards.doneBanner')
+
+  return (
+    <Link
+      to={ctaTo}
+      className={cn('mb-4 block rounded-2xl border border-line bg-card p-5 shadow-sm shadow-plum/5 hover:border-plum/30', className)}
+    >
+      <p className="text-xs font-medium uppercase tracking-wide text-plum">{t('cards.title')}</p>
+      <p className="mt-1 text-lg font-medium text-ink">{copy.title}</p>
+      <p className="mt-2 text-sm leading-relaxed text-muted">{lead}</p>
+      <p className="mt-3 text-sm font-medium text-plum">{cta}</p>
+    </Link>
   )
 }

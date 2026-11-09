@@ -1,6 +1,7 @@
 export {
   deleteTechnique,
   emptyField,
+  emptySkill,
   emptyTechnique,
   fallbackLocales,
   fillTranslations,
@@ -26,9 +27,15 @@ export {
 } from './school-accent'
 export {
   fieldKinds,
+  fieldHint,
   fieldLabel,
   filledAnswers,
   catalogSituations,
+  findInnerSkill,
+  innerSkills,
+  skillAsField,
+  skillHint,
+  skillTitle,
   situations,
   schools,
   techniqueCopy,
@@ -40,6 +47,7 @@ export {
   type Situation,
   type Technique,
   type TechniqueField,
+  type TechniqueSkill,
 } from './model'
 export { SkillAverageRating, SkillLikeButton, SkillStarRating, SkillUserRating } from './skill-feedback'
 export { AnswerList, TechniqueCard, TechniqueCover, TechniqueFields } from './ui'

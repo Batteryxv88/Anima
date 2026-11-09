@@ -67,6 +67,11 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /dayCards/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /techniqueStats/{id} {
       allow read: if true;
       allow create, update: if signedIn()

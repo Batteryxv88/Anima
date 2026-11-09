@@ -34,6 +34,15 @@ export type TechniqueField = {
   id: string
   kind: FieldKind
   label: Record<Locale, string>
+  hint?: Record<Locale, string>
+  options?: Record<Locale, string[]>
+}
+
+export type TechniqueSkill = {
+  id: string
+  kind: FieldKind
+  title: Record<Locale, string>
+  hint: Record<Locale, string>
   options?: Record<Locale, string[]>
 }
 
@@ -45,6 +54,7 @@ export type Technique = {
   coverUrl?: string
   copy: Record<Locale, TechniqueCopy>
   fields: TechniqueField[]
+  skills: TechniqueSkill[]
 }
 
 export type FieldAnswers = Record<string, string>
@@ -57,6 +67,33 @@ export function techniqueCopy(technique: Technique, locale: Locale) {
   return technique.copy[locale] ?? technique.copy.ru
 }
 
+export function skillTitle(skill: TechniqueSkill, locale: Locale) {
+  return skill.title[locale]?.trim() || skill.title.ru
+}
+
+export function skillHint(skill: TechniqueSkill, locale: Locale) {
+  return skill.hint[locale]?.trim() || skill.hint.ru
+}
+
+export function innerSkills(technique: Technique) {
+  return technique.skills ?? []
+}
+
+export function findInnerSkill(technique: Technique, stored: string) {
+  const skills = innerSkills(technique)
+  const needle = stored.trim()
+  if (!needle) return undefined
+  const byId = skills.find((skill) => skill.id === needle)
+  if (byId) return byId
+  if (!/^\d+$/.test(needle)) return undefined
+  const index = Number(needle)
+  return skills.find((skill) => skill.id === `copy-skill-${index}`) ?? skills[index]
+}
+
+export function skillAsField(skill: TechniqueSkill): TechniqueField {
+  return { id: skill.id, kind: skill.kind, label: skill.title, hint: skill.hint, options: skill.options }
+}
+
 export function techniqueMatchesSearch(
   technique: Technique,
   locale: Locale,
@@ -66,7 +103,9 @@ export function techniqueMatchesSearch(
   const needle = query.trim().toLowerCase()
   if (!needle) return true
   const copy = techniqueCopy(technique, locale)
-  const haystack = [copy.title, copy.when, copy.about, meta.school, ...meta.situations]
+  const skillText = (technique.skills ?? []).flatMap((skill) => [skill.title.ru, skill.hint.ru])
+  const fieldText = technique.fields.flatMap((field) => [field.label.ru, field.hint?.ru ?? ''])
+  const haystack = [copy.title, copy.when, copy.about, ...skillText, ...fieldText, meta.school, ...meta.situations]
     .join(' ')
     .toLowerCase()
   return haystack.includes(needle)
@@ -74,6 +113,11 @@ export function techniqueMatchesSearch(
 
 export function fieldLabel(field: TechniqueField, locale: Locale) {
   return field.label[locale] || field.label.ru
+}
+
+export function fieldHint(field: TechniqueField, locale: Locale) {
+  if (!field.hint) return ''
+  return field.hint[locale]?.trim() || field.hint.ru
 }
 
 export function fieldOptions(field: TechniqueField, locale: Locale) {
@@ -113,10 +157,14 @@ export function choiceAnswerDisplay(field: TechniqueField, raw: string, locale: 
 
 export function filledAnswers(technique: Technique, answers: FieldAnswers | undefined, locale: Locale) {
   if (!answers) return []
-  return technique.fields.flatMap((field) => {
+  const fromField = (field: TechniqueField) => {
     const raw = answers[field.id]?.trim()
     if (!raw) return []
     const value = field.kind === 'choice' ? choiceAnswerDisplay(field, raw, locale) : raw
     return [{ id: field.id, label: fieldLabel(field, locale), value }]
-  })
+  }
+  return [
+    ...(technique.skills ?? []).flatMap((skill) => fromField(skillAsField(skill))),
+    ...technique.fields.flatMap(fromField),
+  ]
 }

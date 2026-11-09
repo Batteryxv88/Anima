@@ -14,6 +14,7 @@ import {
   type Technique,
   type TechniqueCopy,
   type TechniqueField,
+  type TechniqueSkill,
 } from './model'
 
 export const useTechniqueStore = create<{ list: Technique[]; setList: (list: Technique[]) => void }>()((set) => ({
@@ -72,8 +73,43 @@ function asField(raw: unknown): TechniqueField | null {
     id: String(data.id ?? createId()),
     kind,
     label,
+    hint: asLocalized(data.hint),
     options: kind === 'choice' ? asOptions(data.options) : undefined,
   }
+}
+
+function asSkill(raw: unknown, index = 0): TechniqueSkill | null {
+  if (typeof raw === 'string') {
+    const title = raw.trim()
+    if (!title) return null
+    return {
+      id: `copy-skill-${index}`,
+      kind: 'textarea',
+      title: { ru: title, en: title, sl: title },
+      hint: emptyLocalized(),
+    }
+  }
+  if (!raw || typeof raw !== 'object') return null
+  const data = raw as Record<string, unknown>
+  const kind = fieldKinds.includes(data.kind as FieldKind) ? (data.kind as FieldKind) : 'textarea'
+  const title = asLocalized(data.title ?? data.label)
+  if (!title.ru.trim()) return null
+  return {
+    id: String(data.id ?? `copy-skill-${index}`),
+    kind,
+    title,
+    hint: asLocalized(data.hint),
+    options: kind === 'choice' ? asOptions(data.options) : undefined,
+  }
+}
+
+function legacyCopySkills(data: Record<string, unknown>): TechniqueSkill[] {
+  const rawCopy = data.copy && typeof data.copy === 'object' ? (data.copy as Record<string, unknown>).ru : undefined
+  const listed =
+    rawCopy && typeof rawCopy === 'object' && Array.isArray((rawCopy as { skills?: unknown }).skills)
+      ? ((rawCopy as { skills: unknown[] }).skills ?? [])
+      : []
+  return listed.flatMap((item, index) => asSkill(item, index) ?? [])
 }
 
 function asTechnique(id: string, data: Record<string, unknown>): CloudTechnique {
@@ -86,6 +122,10 @@ function asTechnique(id: string, data: Record<string, unknown>): CloudTechnique 
     ? data.situations.filter((item): item is Situation => situations.includes(item as Situation))
     : []
   const fields = Array.isArray(data.fields) ? data.fields.flatMap((item) => asField(item) ?? []) : []
+  const parsedSkills = Array.isArray(data.skills)
+    ? data.skills.flatMap((item, index) => asSkill(item, index) ?? [])
+    : []
+  const skills = parsedSkills.length > 0 ? parsedSkills : legacyCopySkills(data)
   const coverUrl = typeof data.coverUrl === 'string' ? data.coverUrl.trim() : ''
   return {
     id,
@@ -95,6 +135,7 @@ function asTechnique(id: string, data: Record<string, unknown>): CloudTechnique 
     coverUrl: coverUrl || undefined,
     copy,
     fields,
+    skills,
     deleted: Boolean(data.deleted),
     updatedAt: String(data.updatedAt ?? ''),
   }
@@ -111,6 +152,7 @@ function fromCloud(cloud: CloudTechnique[]): Technique[] {
       coverUrl: item.coverUrl,
       copy: item.copy,
       fields: item.fields,
+      skills: item.skills,
     }))
 }
 
@@ -147,12 +189,38 @@ export function fallbackLocales(technique: Technique): Technique {
         en: field.label.en.trim() || field.label.ru,
         sl: field.label.sl.trim() || field.label.ru,
       },
+      hint: {
+        ru: field.hint?.ru ?? '',
+        en: field.hint?.en?.trim() || field.hint?.ru || '',
+        sl: field.hint?.sl?.trim() || field.hint?.ru || '',
+      },
       options:
         field.kind === 'choice' && field.options?.ru.length
           ? {
               ru: field.options.ru,
               en: field.options.en.length > 0 ? field.options.en : [...field.options.ru],
               sl: field.options.sl.length > 0 ? field.options.sl : [...field.options.ru],
+            }
+          : undefined,
+    })),
+    skills: (technique.skills ?? []).map((skill) => ({
+      ...skill,
+      title: {
+        ru: skill.title.ru,
+        en: skill.title.en.trim() || skill.title.ru,
+        sl: skill.title.sl.trim() || skill.title.ru,
+      },
+      hint: {
+        ru: skill.hint.ru,
+        en: skill.hint.en.trim() || skill.hint.ru,
+        sl: skill.hint.sl.trim() || skill.hint.ru,
+      },
+      options:
+        skill.kind === 'choice' && skill.options?.ru.length
+          ? {
+              ru: skill.options.ru,
+              en: skill.options.en.length > 0 ? skill.options.en : [...skill.options.ru],
+              sl: skill.options.sl.length > 0 ? skill.options.sl : [...skill.options.ru],
             }
           : undefined,
     })),
@@ -177,12 +245,17 @@ export async function fillTranslations(technique: Technique): Promise<Technique>
         for (const locale of ['en', 'sl'] as const) {
           label[locale] = await translateFromRu(field.label.ru, locale)
         }
+        const hint = { ...(field.hint ?? emptyLocalized()) }
+        for (const locale of ['en', 'sl'] as const) {
+          hint[locale] = (field.hint?.ru ?? '').trim() ? await translateFromRu(field.hint!.ru, locale) : ''
+        }
         if (field.kind !== 'choice' || !field.options?.ru.length) {
-          return { ...field, label, options: undefined }
+          return { ...field, label, hint, options: undefined }
         }
         return {
           ...field,
           label,
+          hint,
           options: {
             ru: field.options.ru,
             en: await Promise.all(field.options.ru.map((item) => translateFromRu(item, 'en'))),
@@ -191,7 +264,30 @@ export async function fillTranslations(technique: Technique): Promise<Technique>
         }
       }),
     )
-    return { ...technique, copy, fields }
+    const skills = await Promise.all(
+      (technique.skills ?? []).map(async (skill) => {
+        const title = { ...skill.title }
+        const hint = { ...skill.hint }
+        for (const locale of ['en', 'sl'] as const) {
+          title[locale] = await translateFromRu(skill.title.ru, locale)
+          hint[locale] = skill.hint.ru.trim() ? await translateFromRu(skill.hint.ru, locale) : ''
+        }
+        if (skill.kind !== 'choice' || !skill.options?.ru.length) {
+          return { ...skill, title, hint, options: undefined }
+        }
+        return {
+          ...skill,
+          title,
+          hint,
+          options: {
+            ru: skill.options.ru,
+            en: await Promise.all(skill.options.ru.map((item) => translateFromRu(item, 'en'))),
+            sl: await Promise.all(skill.options.ru.map((item) => translateFromRu(item, 'sl'))),
+          },
+        }
+      }),
+    )
+    return { ...technique, copy, fields, skills }
   } catch {
     return fallbackLocales(technique)
   }
@@ -208,19 +304,48 @@ export async function saveTechnique(technique: Technique) {
     durationMin: technique.durationMin,
     ...(technique.coverUrl?.trim() ? { coverUrl: technique.coverUrl.trim() } : {}),
     copy: {
-      ...technique.copy,
       ru: {
-        ...technique.copy.ru,
+        title: technique.copy.ru.title.trim(),
         about: technique.copy.ru.about.trim(),
         when: technique.copy.ru.when.trim(),
         steps: technique.copy.ru.steps.map((item) => item.trim()).filter(Boolean),
       },
+      en: {
+        title: technique.copy.en.title.trim(),
+        about: technique.copy.en.about.trim(),
+        when: technique.copy.en.when.trim(),
+        steps: technique.copy.en.steps.map((item) => item.trim()).filter(Boolean),
+      },
+      sl: {
+        title: technique.copy.sl.title.trim(),
+        about: technique.copy.sl.about.trim(),
+        when: technique.copy.sl.when.trim(),
+        steps: technique.copy.sl.steps.map((item) => item.trim()).filter(Boolean),
+      },
     },
-    fields: technique.fields.map((field) =>
-      field.kind === 'choice' && field.options
-        ? { id: field.id, kind: field.kind, label: field.label, options: field.options }
-        : { id: field.id, kind: field.kind, label: field.label },
-    ),
+    fields: technique.fields.map((field) => {
+      const hint = field.hint?.ru.trim()
+        ? {
+            ru: field.hint.ru.trim(),
+            en: field.hint.en.trim(),
+            sl: field.hint.sl.trim(),
+          }
+        : undefined
+      const base = {
+        id: field.id,
+        kind: field.kind,
+        label: field.label,
+        ...(hint ? { hint } : {}),
+      }
+      return field.kind === 'choice' && field.options ? { ...base, options: field.options } : base
+    }),
+    skills: (technique.skills ?? [])
+      .filter((skill) => skill.title.ru.trim())
+      .map((skill) =>
+        skill.kind === 'choice' && skill.options
+          ? { id: skill.id, kind: skill.kind, title: skill.title, hint: skill.hint, options: skill.options }
+          : { id: skill.id, kind: skill.kind, title: skill.title, hint: skill.hint },
+      ),
     updatedAt: new Date().toISOString(),
   }
   await setDoc(doc(db, 'techniques', id), payload)
@@ -234,7 +359,11 @@ export async function deleteTechnique(id: string) {
 }
 
 export function emptyField(): TechniqueField {
-  return { id: createId(), kind: 'textarea', label: emptyLocalized() }
+  return { id: createId(), kind: 'textarea', label: emptyLocalized(), hint: emptyLocalized() }
+}
+
+export function emptySkill(): TechniqueSkill {
+  return { id: createId(), kind: 'textarea', title: emptyLocalized(), hint: emptyLocalized() }
 }
 
 export function emptyTechnique(): Technique {
@@ -249,6 +378,7 @@ export function emptyTechnique(): Technique {
     durationMin: 3,
     copy,
     fields: [],
+    skills: [],
   }
 }
 

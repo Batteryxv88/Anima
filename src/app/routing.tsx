@@ -3,6 +3,8 @@ import { useUserStore } from '@/entities/user'
 import { AuthPage } from '@/pages/auth'
 import { CabinetPage } from '@/pages/cabinet'
 import { CrisisPage } from '@/pages/crisis'
+import { DayCardFillPage } from '@/pages/day-card'
+import { DayCardsListPage } from '@/pages/day-cards'
 import { HomeworkPage } from '@/pages/homework'
 import { JoinPage } from '@/pages/join'
 import { JournalPage } from '@/pages/journal'
@@ -12,6 +14,8 @@ import { SessionPage } from '@/pages/session'
 import { SkillPage } from '@/pages/skill'
 import { SkillsPage } from '@/pages/skills'
 import {
+  StaffDayCardEditorPage,
+  StaffDayCardsHomePage,
   StaffForYouArticlePage,
   StaffForYouGroupPage,
   StaffForYouHomePage,
@@ -62,6 +66,8 @@ export const router = createBrowserRouter([
       { path: '/skills/:id', element: <SkillPage /> },
       { path: '/homework', element: <HomeworkPage /> },
       { path: '/journal', element: <JournalPage /> },
+      { path: '/cards', element: <DayCardsListPage /> },
+      { path: '/cards/:id', element: <DayCardFillPage /> },
       { path: '/session', element: <SessionPage /> },
       { path: '/profile', element: <ProfilePage /> },
       { path: '/crisis', element: <CrisisPage /> },
@@ -78,6 +84,9 @@ export const router = createBrowserRouter([
           { path: 'techniques', element: <Navigate to="/skills" replace /> },
           { path: 'techniques/new', element: <Navigate to="/skills/new" replace /> },
           { path: 'techniques/:id', element: <LegacyTechniqueEdit /> },
+          { path: 'day-cards', element: <StaffDayCardsHomePage /> },
+          { path: 'day-cards/new', element: <StaffDayCardEditorPage /> },
+          { path: 'day-cards/:id', element: <StaffDayCardEditorPage /> },
           { path: 'for-you', element: <StaffForYouHomePage /> },
           { path: 'for-you/:groupId/:articleId', element: <StaffForYouArticlePage /> },
           { path: 'for-you/:groupId', element: <StaffForYouGroupPage /> },

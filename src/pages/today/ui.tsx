@@ -6,7 +6,7 @@ import { localeTags, type Locale } from '@/shared/config'
 import { formatDay, normalizeScaleValue, SCALE_DEFAULT, scaleWordKey, todayId } from '@/shared/lib'
 import { Button, Card, NoticeLayer, PageHeader, ScaleTap, useNotice } from '@/shared/ui'
 import { HomeworkBlock } from '@/widgets/homework-block'
-import { TodayForYouCard, TodayHubGreeting, TodayQuickTiles } from '@/widgets/today-hub'
+import { TodayDayCardBanner, TodayForYouCard, TodayHubGreeting, TodayQuickTiles } from '@/widgets/today-hub'
 
 export function TodayPage() {
   const { t, i18n } = useTranslation()
@@ -27,6 +27,7 @@ export function TodayPage() {
       </div>
       <TodayHubGreeting dateLabel={formatDay(todayId(), localeTags[locale])} />
       <TodayForYouCard />
+      <TodayDayCardBanner />
       <TodayQuickTiles className="mb-4" />
       <div className="grid gap-4">
         {isSpecialist ? (
@@ -84,7 +85,10 @@ export function TodayPage() {
           <h2 className="mb-3 text-base font-medium">{t('today.weekTitle')}</h2>
           <HomeworkBlock />
         </div>
-        <div className="hidden gap-3 sm:grid-cols-2 lg:grid">
+        <div className="hidden gap-3 sm:grid-cols-2 lg:grid lg:grid-cols-3">
+          <Link to="/cards" className="rounded-2xl border border-plum/30 bg-plum/8 px-5 py-4 text-sm text-plum">
+            {t('cards.open')}
+          </Link>
           <Link to="/journal" className="rounded-2xl border border-lavender/40 bg-lavender/10 px-5 py-4 text-sm text-plum">
             {t('journal.open')}
           </Link>

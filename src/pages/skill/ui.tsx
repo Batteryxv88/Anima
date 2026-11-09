@@ -5,7 +5,11 @@ import { useCareStore } from '@/entities/care'
 import {
   TechniqueCover,
   TechniqueFields,
+  innerSkills,
   schoolAccentText,
+  skillAsField,
+  skillHint,
+  skillTitle,
   techniqueCopy,
   useTechniqueStore,
   type FieldAnswers,
@@ -14,7 +18,7 @@ import { isStaffRole, useUserStore } from '@/entities/user'
 import { type Locale } from '@/shared/config'
 import { isThisWeek, practiceFrom } from '@/shared/lib'
 import { SkillLikeButton, SkillStarRating } from '@/entities/technique'
-import { Button, Card, Field, NoticeLayer, PageHeader, RichText, TextArea, useNotice } from '@/shared/ui'
+import { Button, Card, Field, HelpFold, NoticeLayer, PageHeader, RichText, TextArea, useNotice } from '@/shared/ui'
 
 const outlineLink =
   'inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink hover:border-plum/35'
@@ -51,7 +55,9 @@ export function SkillPage() {
   }, [location.pathname, location.state, navigate, show, t])
 
   if (!technique) return <Navigate to="/skills" replace />
-  const copy = techniqueCopy(technique, i18n.language as Locale)
+  const locale = i18n.language as Locale
+  const copy = techniqueCopy(technique, locale)
+  const skills = innerSkills(technique)
 
   return (
     <>
@@ -96,6 +102,23 @@ export function SkillPage() {
             </>
           ) : null}
         </Card>
+        {skills.length > 0 ? (
+          <Card>
+            <h2 className="text-xs tracking-wide text-gold">{t('skill.skills')}</h2>
+            <div className="mt-3 grid gap-4">
+              {skills.map((skill) => (
+                <HelpFold key={skill.id} title={skillTitle(skill, locale)} help={skillHint(skill, locale)}>
+                  <TechniqueFields
+                    hideLabel
+                    fields={[skillAsField(skill)]}
+                    values={answers}
+                    onChange={(fieldId, value) => setAnswers((current) => ({ ...current, [fieldId]: value }))}
+                  />
+                </HelpFold>
+              ))}
+            </div>
+          </Card>
+        ) : null}
         {copy.steps.filter((item) => item.trim()).length > 0 ? (
           <Card>
             <h2 className="text-xs tracking-wide text-gold">{t('skill.steps')}</h2>

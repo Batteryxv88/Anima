@@ -12,7 +12,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useShareStore } from '@/entities/care'
 import { useUserStore } from '@/entities/user'
 import { APP_NAME, navItems } from '@/shared/config'
-import { cn, practiceFrom } from '@/shared/lib'
+import { cn, practiceFrom, staffReturnTo } from '@/shared/lib'
 import { NoticeLayer, useNotice, useReturnNotice } from '@/shared/ui'
 import { NameStep } from './name-step'
 
@@ -54,27 +54,37 @@ export function AppShell() {
     location.pathname.startsWith('/skills/') ||
     location.pathname.startsWith('/today/for-you/') ||
     location.pathname === '/journal' ||
+    location.pathname.startsWith('/cards') ||
     location.pathname.startsWith('/join/') ||
     location.pathname.startsWith('/staff') ||
     cabinetPerson ||
     (!isSpecialist && location.pathname.startsWith('/cabinet'))
   const skillEditor =
     location.pathname === '/skills/new' || /^\/skills\/[^/]+\/edit$/.test(location.pathname)
+  const skillReturn = staffReturnTo(new URLSearchParams(location.search).get('returnTo'))
+  const cardsFill = /^\/cards\/[^/]+$/.test(location.pathname)
+  const fromToday = new URLSearchParams(location.search).get('from') === 'today'
   const backTo = skillEditor
-    ? location.pathname === '/skills/new'
-      ? '/skills'
-      : location.pathname.replace(/\/edit$/, '')
+    ? skillReturn || (location.pathname === '/skills/new' ? '/skills' : location.pathname.replace(/\/edit$/, ''))
     : location.pathname.startsWith('/today/for-you/')
       ? '/today'
       : location.pathname.startsWith('/skills/')
         ? practiceFrom(location.state)
-        : cabinetPerson
-        ? '/cabinet'
-        : location.pathname.startsWith('/staff') ||
-            location.pathname.startsWith('/cabinet') ||
-            location.pathname.startsWith('/join/')
-          ? '/profile'
-          : '/today'
+        : cardsFill
+          ? fromToday
+            ? '/today'
+            : '/cards'
+          : location.pathname === '/cards'
+            ? '/today'
+            : /^\/staff\/day-cards\/.+/.test(location.pathname)
+              ? '/staff/day-cards'
+              : cabinetPerson
+                ? '/cabinet'
+                : location.pathname.startsWith('/staff') ||
+                    location.pathname.startsWith('/cabinet') ||
+                    location.pathname.startsWith('/join/')
+                  ? '/profile'
+                  : '/today'
 
   return (
     <div className="anima-shell-bg min-h-dvh text-ink">

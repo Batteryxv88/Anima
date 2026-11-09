@@ -54,11 +54,32 @@ export type SkillPref = {
   rating?: number
 }
 
+export type DayCardRow = {
+  id: string
+  practiceId?: string
+  values: Record<string, string>
+}
+
+export type DayCardSectionAnswers = {
+  values: Record<string, string>
+  rows: DayCardRow[]
+}
+
+export type DayCardEntry = {
+  id: string
+  dayCardId: string
+  date: string
+  answers: Record<string, DayCardSectionAnswers>
+  createdAt: string
+  updatedAt: string
+}
+
 export type CareSnapshot = {
   checkIns: CheckIn[]
   assignments: Assignment[]
   practices: Practice[]
   journal: JournalEntry[]
+  dayCardEntries: DayCardEntry[]
   sessionNote: string
   crisisPlan: CrisisPlan
   skillPrefs: Record<string, SkillPref>
@@ -72,6 +93,18 @@ type CareState = CareSnapshot & {
   setAssignmentAnswer: (id: string, fieldId: string, value: string) => void
   removeAssignment: (id: string) => void
   addPractice: (techniqueId: string, note: string, answers?: Record<string, string>) => void
+  upsertPractice: (input: {
+    id?: string
+    techniqueId: string
+    note: string
+    answers?: Record<string, string>
+  }) => string
+  upsertDayCardEntry: (input: {
+    id?: string
+    dayCardId: string
+    date: string
+    answers: DayCardEntry['answers']
+  }) => string
   addJournalEntry: (entry: Omit<JournalEntry, 'id' | 'at'>) => void
   setJournalShare: (id: string, shareWithSpecialist: boolean) => void
   removeJournalEntry: (id: string) => void
@@ -92,6 +125,7 @@ export const useCareStore = create<CareState>()(
       assignments: [],
       practices: [],
       journal: [],
+      dayCardEntries: [],
       sessionNote: '',
       crisisPlan: emptyPlan,
       skillPrefs: {},
@@ -144,19 +178,50 @@ export const useCareStore = create<CareState>()(
         }),
       removeAssignment: (id) =>
         set({ assignments: get().assignments.filter((item) => item.id !== id) }),
-      addPractice: (techniqueId, note, answers = {}) =>
+      addPractice: (techniqueId, note, answers = {}) => {
+        get().upsertPractice({ techniqueId, note, answers })
+      },
+      upsertPractice: ({ id, techniqueId, note, answers = {} }) => {
+        const nextId = id?.trim() || createId()
+        const at = new Date().toISOString()
+        const current = get().practices
+        const index = current.findIndex((item) => item.id === nextId)
+        if (index >= 0) {
+          set({
+            practices: current.map((item) =>
+              item.id === nextId ? { ...item, techniqueId, note, answers } : item,
+            ),
+          })
+          return nextId
+        }
         set({
-          practices: [
-            ...get().practices,
-            {
-              id: createId(),
-              techniqueId,
-              at: new Date().toISOString(),
-              note,
-              answers,
-            },
-          ],
-        }),
+          practices: [...current, { id: nextId, techniqueId, at, note, answers }],
+        })
+        return nextId
+      },
+      upsertDayCardEntry: ({ id, dayCardId, date, answers }) => {
+        const now = new Date().toISOString()
+        const current = get().dayCardEntries
+        const existing =
+          (id ? current.find((item) => item.id === id) : undefined) ??
+          current.find((item) => item.dayCardId === dayCardId && item.date === date)
+        const nextId = existing?.id ?? id?.trim() ?? createId()
+        const next: DayCardEntry = {
+          id: nextId,
+          dayCardId,
+          date,
+          answers,
+          createdAt: existing?.createdAt ?? now,
+          updatedAt: now,
+        }
+        const rest = current.filter((item) => item.id !== nextId)
+        set({
+          dayCardEntries: [next, ...rest]
+            .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+            .slice(0, 60),
+        })
+        return nextId
+      },
       addJournalEntry: (entry) =>
         set({
           journal: [
@@ -202,8 +267,24 @@ export const useCareStore = create<CareState>()(
           return { skillPrefs: { ...state.skillPrefs, [techniqueId]: next } }
         }),
       clearSkillPrefs: () => set({ skillPrefs: {} }),
-      replaceCare: (payload) => set({ ...payload, skillPrefs: payload.skillPrefs ?? {} }),
+      replaceCare: (payload) =>
+        set({
+          ...payload,
+          skillPrefs: payload.skillPrefs ?? {},
+          dayCardEntries: payload.dayCardEntries ?? [],
+        }),
     }),
-    { name: 'anima-care' },
+    {
+      name: 'anima-care',
+      merge: (persisted, current) => {
+        const data = persisted as Partial<CareSnapshot> | undefined
+        return {
+          ...current,
+          ...data,
+          dayCardEntries: Array.isArray(data?.dayCardEntries) ? data.dayCardEntries : [],
+          skillPrefs: data?.skillPrefs ?? current.skillPrefs,
+        }
+      },
+    },
   ),
 )

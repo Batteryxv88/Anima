@@ -9,6 +9,8 @@ export {
   EmptyState,
   Field,
   FilterMenu,
+  Fold,
+  HelpFold,
   FormatArea,
   IconButton,
   NoticeDialog,

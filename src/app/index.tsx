@@ -10,6 +10,7 @@ import {
   useCareStore,
   useShareStore,
 } from '@/entities/care'
+import { listenDayCards } from '@/entities/day-card'
 import { listenForYou } from '@/entities/for-you'
 import { listenTechniqueStats, listenTechniques } from '@/entities/technique'
 import { listenAuth, pullProfile, pushProfile, useUserStore } from '@/entities/user'
@@ -50,10 +51,12 @@ function CloudSync({ children }: { children: ReactNode }) {
     const stopTechniques = listenTechniques()
     const stopStats = listenTechniqueStats()
     const stopForYou = listenForYou()
+    const stopDayCards = listenDayCards()
     return () => {
       stopTechniques()
       stopStats()
       stopForYou()
+      stopDayCards()
     }
   }, [])
 

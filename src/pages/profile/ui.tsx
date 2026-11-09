@@ -78,6 +78,9 @@ export function ProfilePage() {
                 <Link to="/staff/for-you" className={staffLink}>
                   {t('staff.forYouTitle')}
                 </Link>
+                <Link to="/staff/day-cards" className={staffLink}>
+                  {t('staff.dayCardsTitle')}
+                </Link>
                 <Link to="/skills/new" className={staffLink}>
                   {t('staff.addSkill')}
                 </Link>

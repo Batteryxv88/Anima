@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import {
+  fieldHint,
   fieldLabel,
   fieldOptions,
   filledAnswers,
@@ -15,7 +16,7 @@ import { schoolAccentBorderLeft, schoolAccentText } from './school-accent'
 import type { Locale } from '@/shared/config'
 import { cn, normalizeScaleValue, SCALE_MAX, SCALE_MIN } from '@/shared/lib'
 import { SkillAverageRating, SkillLikeButton } from './skill-feedback'
-import { Chip, Field, Scale, TextArea, TextField } from '@/shared/ui'
+import { Chip, HelpFold, Scale, TextArea, TextField } from '@/shared/ui'
 export function TechniqueCover({
   coverUrl,
   className,
@@ -82,10 +83,12 @@ export function TechniqueFields({
   fields,
   values,
   onChange,
+  hideLabel,
 }: {
   fields: TechniqueField[]
   values: FieldAnswers
   onChange: (id: string, value: string) => void
+  hideLabel?: boolean
 }) {
   const { i18n } = useTranslation()
   const locale = i18n.language as Locale
@@ -94,21 +97,17 @@ export function TechniqueFields({
   return (
     <div className="grid gap-3">
       {fields.map((field) => {
-        const label = fieldLabel(field, locale)
+        const title = hideLabel ? '' : fieldLabel(field, locale)
+        const help = hideLabel ? '' : fieldHint(field, locale)
         const value = values[field.id] ?? ''
+        let body
         if (field.kind === 'textarea') {
-          return (
-            <Field key={field.id} label={label}>
-              <TextArea rows={3} value={value} onChange={(event) => onChange(field.id, event.target.value)} />
-            </Field>
-          )
-        }
-        if (field.kind === 'scale') {
+          body = <TextArea rows={3} value={value} onChange={(event) => onChange(field.id, event.target.value)} />
+        } else if (field.kind === 'scale') {
           const number = value === '' ? SCALE_MIN : normalizeScaleValue(Number(value))
-          return (
+          body = (
             <Scale
-              key={field.id}
-              label={label}
+              label=""
               minLabel={String(SCALE_MIN)}
               maxLabel={String(SCALE_MAX)}
               valueLabel={value === '' ? '—' : String(number)}
@@ -116,41 +115,39 @@ export function TechniqueFields({
               onChange={(next) => onChange(field.id, String(next))}
             />
           )
-        }
-        if (field.kind === 'choice') {
+        } else if (field.kind === 'choice') {
           const options = fieldOptions(field, locale)
           const ruOptions = field.options?.ru ?? []
           const selected = parseChoiceValues(value)
-          return (
-            <div key={field.id}>
-              <p className="mb-1.5 text-sm text-muted">{label}</p>
-              <div className="flex flex-wrap gap-2">
-                {options.map((item, index) => {
-                  const canonical = ruOptions[index] ?? item
-                  const active = selected.includes(canonical)
-                  return (
-                    <Chip
-                      key={`${field.id}-${index}`}
-                      active={active}
-                      onClick={() => {
-                        const next = active
-                          ? selected.filter((entry) => entry !== canonical)
-                          : [...selected, canonical]
-                        onChange(field.id, serializeChoiceValues(next))
-                      }}
-                    >
-                      {item}
-                    </Chip>
-                  )
-                })}
-              </div>
+          body = (
+            <div className="flex flex-wrap gap-2">
+              {options.map((item, index) => {
+                const canonical = ruOptions[index] ?? item
+                const active = selected.includes(canonical)
+                return (
+                  <Chip
+                    key={`${field.id}-${index}`}
+                    active={active}
+                    onClick={() => {
+                      const next = active
+                        ? selected.filter((entry) => entry !== canonical)
+                        : [...selected, canonical]
+                      onChange(field.id, serializeChoiceValues(next))
+                    }}
+                  >
+                    {item}
+                  </Chip>
+                )
+              })}
             </div>
           )
+        } else {
+          body = <TextField value={value} onChange={(event) => onChange(field.id, event.target.value)} />
         }
         return (
-          <Field key={field.id} label={label}>
-            <TextField value={value} onChange={(event) => onChange(field.id, event.target.value)} />
-          </Field>
+          <HelpFold key={field.id} title={title} help={help}>
+            {body}
+          </HelpFold>
         )
       })}
     </div>
