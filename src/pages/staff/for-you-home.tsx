@@ -64,7 +64,7 @@ export function StaffForYouHomePage() {
           setConfirm(null)
         }}
       />
-      <Link to="/profile" className="mb-3 inline-flex min-h-9 items-center text-sm text-plum lg:hidden">
+      <Link to="/profile" className="mb-3 inline-flex min-h-9 items-center text-sm text-plum">
         {t('nav.back')}
       </Link>
       <PageHeader title={t('staff.forYouTitle')} text={t('staff.forYouText')} />

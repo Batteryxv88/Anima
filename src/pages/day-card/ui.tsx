@@ -6,6 +6,7 @@ import {
   dayCardCopy,
   dayCardText,
   emptySectionAnswers,
+  entryHasContent,
   extraFields,
   firstRepeaterSection,
   repeaterRowCount,
@@ -25,8 +26,8 @@ import {
 } from '@/entities/day-card'
 import { DayCardFieldControl, SkillStepsPreview } from '@/widgets/day-card-form'
 import { isStaffRole, useUserStore } from '@/entities/user'
-import { type Locale } from '@/shared/config'
-import { cn, createId, todayId } from '@/shared/lib'
+import { localeTags, type Locale } from '@/shared/config'
+import { cn, createId, formatDay, todayId } from '@/shared/lib'
 import { Button, Card, Chip, NoticeLayer, PageHeader, RichText, useNotice } from '@/shared/ui'
 
 function isIsoDate(value: string) {
@@ -99,10 +100,19 @@ export function DayCardFillPage() {
       return
     }
     const timer = window.setTimeout(() => {
+      const shell: DayCardEntry = {
+        id: stored?.id ?? '',
+        dayCardId: card.id,
+        date,
+        answers,
+        createdAt: '',
+        updatedAt: '',
+      }
+      if (!entryHasContent(card, shell) && !stored) return
       upsertDayCardEntry({ dayCardId: card.id, date, answers })
     }, 450)
     return () => window.clearTimeout(timer)
-  }, [answers, card, date, upsertDayCardEntry])
+  }, [answers, card, date, stored, upsertDayCardEntry])
 
   useEffect(() => {
     if (!card || !repeater) return
@@ -293,7 +303,7 @@ export function DayCardFillPage() {
   return (
     <>
       <NoticeLayer notice={notice} onClose={hide} />
-      <Link to={backTo} className="mb-3 inline-flex min-h-11 items-center text-sm text-plum lg:hidden">
+      <Link to={backTo} className="mb-3 inline-flex min-h-11 items-center text-sm text-plum">
         {t('nav.back')}
       </Link>
       <PageHeader
@@ -310,17 +320,41 @@ export function DayCardFillPage() {
           ) : null
         }
       />
-      <div className="mb-4 flex flex-wrap gap-1.5">
-        {days.map((item) => {
-          const active = item === date
-          const marked = entries.some((entry) => entry.dayCardId === card.id && entry.date === item)
-          return (
-            <Chip key={item} size="compact" active={active} onClick={() => setDate(item)}>
-              {item.slice(8)}
-              {marked && !active ? ' ·' : ''}
-            </Chip>
-          )
-        })}
+      <div className="mb-3">
+        <p className="mb-1 text-[11px] leading-none text-muted">{t('cards.recentDays')}</p>
+        <div className="flex flex-wrap items-end gap-0.5">
+          {days.map((item) => {
+            const active = item === date
+            const isToday = item === todayId()
+            const marked = entries.some(
+              (entry) => entry.dayCardId === card.id && entry.date === item && entryHasContent(card, entry),
+            )
+            return (
+              <button
+                key={item}
+                type="button"
+                aria-current={active ? 'date' : undefined}
+                aria-label={isToday ? `${t('cards.todayChip')}, ${formatDay(item, localeTags[locale])}` : formatDay(item, localeTags[locale])}
+                onClick={() => setDate(item)}
+                className={cn(
+                  'relative flex min-h-8 min-w-8 shrink-0 flex-col items-center justify-center rounded-lg px-1.5 pb-1.5 pt-0.5 text-xs leading-none tabular-nums',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/50',
+                  active ? 'bg-plum text-white dark:text-ink' : 'text-ink hover:bg-card',
+                )}
+              >
+                <span className={cn(isToday && 'font-medium')}>{isToday ? t('cards.todayChip') : String(Number(item.slice(8)))}</span>
+                {marked ? (
+                  <span
+                    className={cn(
+                      'absolute bottom-0.5 size-1 rounded-full',
+                      active ? 'bg-white dark:bg-ink' : 'bg-plum',
+                    )}
+                  />
+                ) : null}
+              </button>
+            )
+          })}
+        </div>
       </div>
       <div className="sticky top-0 z-[5] -mx-4 mb-4 border-b border-line bg-canvas/95 px-4 py-2 backdrop-blur-sm lg:hidden">
         <div className="flex flex-wrap gap-1.5">

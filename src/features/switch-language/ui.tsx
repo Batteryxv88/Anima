@@ -46,15 +46,20 @@ export function WelcomeLanguageSwitch() {
   )
 }
 
-export function LanguageSwitch() {
+export function LanguageSwitch({ size = 'default' }: { size?: 'default' | 'compact' }) {
   const { t } = useTranslation()
   const language = useUserStore((state) => state.language)
   const setLanguage = useUserStore((state) => state.setLanguage)
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className={cn('flex flex-wrap', size === 'compact' ? 'gap-1.5' : 'gap-2')}>
       {locales.map((item) => (
-        <Chip key={item} active={language === item} onClick={() => setLanguage(item as Locale)}>
+        <Chip
+          key={item}
+          size={size}
+          active={language === item}
+          onClick={() => setLanguage(item as Locale)}
+        >
           {t(`language.${item}`)}
         </Chip>
       ))}

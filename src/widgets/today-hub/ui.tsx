@@ -63,7 +63,7 @@ export function TodayHubGreeting() {
   const { t } = useTranslation()
 
   return (
-    <header className="mb-4 lg:hidden">
+    <header className="mb-4">
       <p className="text-[1.85rem] font-medium leading-tight tracking-tight text-ink">{APP_NAME}</p>
       <p className="mt-1 text-base leading-snug text-muted">{t('today.greetingLead')}</p>
     </header>
@@ -85,7 +85,7 @@ export function TodayForYouCard({ className }: { className?: string }) {
       <Link
         to="/staff/for-you"
         className={cn(
-          'mb-4 block rounded-[1.25rem] border border-dashed border-plum/40 bg-plum/8 p-5 lg:hidden',
+          'mb-4 block rounded-[1.25rem] border border-dashed border-plum/40 bg-plum/8 p-5',
           className,
         )}
       >
@@ -103,7 +103,7 @@ export function TodayForYouCard({ className }: { className?: string }) {
     <Link
       to={`/today/for-you/${daily.id}`}
       className={cn(
-        'relative mb-4 block overflow-hidden rounded-[1.25rem] transition-opacity hover:opacity-95 lg:hidden',
+        'relative mb-4 block overflow-hidden rounded-[1.25rem] transition-opacity hover:opacity-95',
         className,
       )}
     >
@@ -123,7 +123,7 @@ export function TodayQuickTiles({ className }: { className?: string }) {
   const { t } = useTranslation()
 
   return (
-    <div className={cn('grid grid-cols-2 gap-3 lg:hidden', className)}>
+    <div className={cn('grid grid-cols-2 gap-3', className)}>
       {tiles.map((tile) => {
         const Icon = tile.icon
         return (

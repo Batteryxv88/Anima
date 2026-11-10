@@ -5,19 +5,22 @@ import { create } from 'zustand'
 import {
   confirmInvite,
   createInvite,
+  defaultScope,
   inviteUrl,
   listenInvite,
   revokeLink,
+  setShareScope,
   syncPatientShares,
   updateLinkScope,
   useShareStore,
   type CareLink,
   type Invite,
   type ShareScope,
+  type ShareScopeFlag,
 } from '@/entities/care'
 import { useUserStore } from '@/entities/user'
 import { isFirebaseConfigured } from '@/shared/firebase'
-import { BinaryChoice, Button, NoticeLayer, QrMark, useNotice } from '@/shared/ui'
+import { Button, Chip, NoticeLayer, QrMark, useNotice } from '@/shared/ui'
 
 const useInviteFlow = create<{ invite: Invite | null; setInvite: (invite: Invite | null) => void }>((set) => ({
   invite: null,
@@ -36,22 +39,35 @@ function ScopeFields({
   onChange: (scope: ShareScope) => void
 }) {
   const { t } = useTranslation()
-  const row = (key: keyof ShareScope, label: string) => (
-    <BinaryChoice
-      label={label}
-      value={scope[key]}
-      onChange={(next) => onChange({ ...scope, [key]: next })}
-      offLabel={t('invite.hidden')}
-      onLabel={t('invite.visible')}
-      stateOff={t('invite.nowHidden')}
-      stateOn={t('invite.nowVisible')}
-    />
+  const row = (key: ShareScopeFlag, label: string) => (
+    <div className="flex items-center justify-between gap-2">
+      <span className="min-w-0 truncate text-sm text-ink">{label}</span>
+      <div className="flex shrink-0 gap-1.5" role="group" aria-label={label}>
+        <Chip
+          size="compact"
+          active={!scope[key]}
+          aria-pressed={!scope[key]}
+          onClick={() => onChange(setShareScope(scope, key, false))}
+        >
+          {t('invite.hidden')}
+        </Chip>
+        <Chip
+          size="compact"
+          active={scope[key]}
+          aria-pressed={scope[key]}
+          onClick={() => onChange(setShareScope(scope, key, true))}
+        >
+          {t('invite.visible')}
+        </Chip>
+      </div>
+    </div>
   )
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-1.5">
       {row('trend', t('invite.scopeTrend'))}
       {row('assignments', t('invite.scopeHomework'))}
-      {row('journal', t('invite.scopeJournal'))}
+      {row('journalNotes', t('invite.scopeNotes'))}
+      {row('journalThoughts', t('invite.scopeThoughts'))}
     </div>
   )
 }
@@ -94,35 +110,29 @@ export function InvitePanel() {
     })
   }, [invite?.token, invite?.status, setInvite])
 
-  if (!uid) {
-    return <p className="mt-3 text-sm leading-relaxed text-muted">{t('invite.needAccount')}</p>
-  }
+  if (!uid) return null
   if (!ready) {
-    return <p className="mt-3 text-sm leading-relaxed text-muted">{t('auth.noFirebase')}</p>
+    return <p className="text-sm text-muted">{t('auth.noFirebase')}</p>
   }
 
   return (
-    <div className="mt-4 grid gap-4">
+    <div className="grid gap-2">
       {isSpecialist ? (
-        <div className="grid gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-plum">{t('invite.asSpecialist')}</p>
-          <Link
-            to="/cabinet"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-plum px-4 text-sm font-medium text-white dark:text-ink"
-          >
+          <Link to="/cabinet" className="flex min-h-8 items-center text-sm font-medium text-plum">
             {t('cabinet.open')}
           </Link>
         </div>
       ) : null}
-      {claimed ? (
-        <p className="text-sm leading-relaxed text-muted">{t('invite.confirmBelow')}</p>
-      ) : invite && invite.status === 'open' && left > 0 ? (
-        <div className="grid gap-3">
+      {claimed ? null : invite && invite.status === 'open' && left > 0 ? (
+        <div className="grid gap-2">
           <QrMark value={url} />
-          <p className="text-sm text-muted">{t('invite.ttl', { count: left })}</p>
+          <p className="text-xs text-muted">{t('invite.ttl', { count: left })}</p>
           <p className="break-all text-xs text-muted">{url}</p>
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={() => {
               void navigator.clipboard.writeText(url).then(() => setCopied(true))
             }}
@@ -131,14 +141,11 @@ export function InvitePanel() {
           </Button>
         </div>
       ) : hasSpecialist ? (
-        <div className="grid gap-2">
-          <p className="text-sm leading-relaxed text-muted">{t('invite.connected')}</p>
-          <Button variant="ghost" className="justify-start px-0 text-plum" onClick={startInvite}>
-            {t('invite.createAnother')}
-          </Button>
-        </div>
+        <Button variant="ghost" size="sm" className="text-plum" onClick={startInvite}>
+          {t('invite.createAnother')}
+        </Button>
       ) : (
-        <Button variant="outline" onClick={startInvite}>
+        <Button variant="outline" size="sm" onClick={startInvite}>
           {t('invite.create')}
         </Button>
       )}
@@ -153,30 +160,30 @@ export function SharePanel() {
   const patientLinks = useShareStore((state) => state.patientLinks)
   const invite = useInviteFlow((state) => state.invite)
   const setInvite = useInviteFlow((state) => state.setInvite)
-  const [scope, setScope] = useState<ShareScope>({ assignments: true, trend: true, journal: true })
+  const [scope, setScope] = useState<ShareScope>(defaultScope)
   const [error, setError] = useState('')
   const claimed = invite?.status === 'claimed' && Boolean(invite.therapistUid)
   const { notice, show, hide } = useNotice()
 
-  if (!uid) {
-    return <p className="mt-3 text-sm leading-relaxed text-muted">{t('invite.needAccount')}</p>
-  }
+  if (!uid) return null
+  if (patientLinks.length === 0 && !claimed) return null
 
   return (
-    <div className="mt-4 grid gap-4">
+    <div className="grid gap-2">
       <NoticeLayer notice={notice} onClose={hide} />
-      <p className="text-sm leading-relaxed text-muted">{t('invite.shareText')}</p>
+      {patientLinks.length > 0 ? <p className="text-xs text-muted">{t('invite.shareText')}</p> : null}
       {patientLinks.map((link) => (
         <ShareLinkCard key={link.id} link={link} uid={uid} onNotice={show} />
       ))}
       {claimed && invite ? (
-        <div className="grid gap-3 rounded-xl border border-line px-4 py-3">
-          <p className="text-sm leading-relaxed">
+        <div className="grid gap-2 rounded-xl border border-line p-3">
+          <p className="text-sm leading-snug">
             {t('invite.claimedBy', { email: invite.therapistEmail ?? t('invite.specialist') })}
           </p>
-          <p className="text-sm text-muted">{t('invite.scopeHint')}</p>
+          <p className="text-xs text-muted">{t('invite.scopeHint')}</p>
           <ScopeFields scope={scope} onChange={setScope} />
           <Button
+            size="sm"
             onClick={() => {
               setError('')
               void confirmInvite(invite, scope)
@@ -191,9 +198,6 @@ export function SharePanel() {
             {t('invite.confirm')}
           </Button>
         </div>
-      ) : null}
-      {patientLinks.length === 0 && !claimed ? (
-        <p className="text-sm leading-relaxed text-muted">{t('invite.shareEmpty')}</p>
       ) : null}
       {error ? <p className="text-sm text-terra">{error}</p> : null}
     </div>
@@ -218,8 +222,8 @@ function ShareLinkCard({
   }, [link.scope])
 
   return (
-    <div className="grid gap-4 rounded-xl border border-line px-4 py-3">
-      <p className="text-sm font-medium">{link.therapistEmail || t('invite.specialist')}</p>
+    <div className="grid gap-2 rounded-xl border border-line p-3">
+      <p className="truncate text-sm font-medium">{link.therapistEmail || t('invite.specialist')}</p>
       <ScopeFields
         scope={scope}
         onChange={(next) => {
@@ -231,7 +235,9 @@ function ShareLinkCard({
         }}
       />
       <Button
-        variant="outline"
+        variant="ghost"
+        size="sm"
+        className="text-terra"
         onClick={() => {
           void revokeLink(link.id).then(() => {
             onNotice(t('invite.revokedNotice'))

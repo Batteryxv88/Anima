@@ -1,9 +1,10 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { getFirebaseDb } from '@/shared/firebase'
-import { withCloudLock } from '@/shared/lib'
+import { invertScaleValue, normalizeScaleValue, withCloudLock } from '@/shared/lib'
 import { normalizeSkillRating } from '@/entities/technique/stats'
 import {
   useCareStore,
+  type CheckIn,
   type DayCardEntry,
   type DayCardRow,
   type DayCardSectionAnswers,
@@ -85,6 +86,24 @@ function asDayCardEntries(raw: unknown): DayCardEntry[] {
   })
 }
 
+function asCheckIns(raw: unknown, invertAnxiety: boolean): CheckIn[] {
+  if (!Array.isArray(raw)) return []
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== 'object') return []
+    const row = item as Record<string, unknown>
+    if (typeof row.date !== 'string' || !row.date) return []
+    const anxiety = Number(row.anxiety)
+    return [
+      {
+        date: row.date,
+        mood: normalizeScaleValue(Number(row.mood)),
+        anxiety: invertAnxiety ? invertScaleValue(anxiety) : normalizeScaleValue(anxiety),
+        sleep: normalizeScaleValue(Number(row.sleep)),
+      },
+    ]
+  })
+}
+
 function asJournal(raw: unknown): JournalEntry[] {
   if (!Array.isArray(raw)) return []
   return raw.flatMap((item) => {
@@ -119,7 +138,7 @@ export async function pullCare(uid: string) {
   const data = snap.data()
   withCloudLock(() =>
     useCareStore.getState().replaceCare({
-      checkIns: Array.isArray(data.checkIns) ? data.checkIns : [],
+      checkIns: asCheckIns(data.checkIns, data.anxietyHighIsWorse !== true),
       assignments: Array.isArray(data.assignments) ? data.assignments : [],
       practices: Array.isArray(data.practices) ? data.practices : [],
       journal: asJournal(data.journal),
@@ -143,6 +162,7 @@ export async function pushCare(uid: string) {
     doc(db, 'userCare', uid),
     {
       checkIns: state.checkIns,
+      anxietyHighIsWorse: true,
       assignments: state.assignments,
       practices: state.practices,
       journal: state.journal,

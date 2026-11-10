@@ -1,65 +1,29 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  isPrimaryCountry,
-  moreCountries,
-  primaryCountries,
-  type Country,
-} from '@/shared/config'
+import { countries, type Country } from '@/shared/config'
 import { cn } from '@/shared/lib'
-import { ChoiceButton, ChoiceGroup } from '@/shared/ui'
+import { SearchSelect } from '@/shared/ui'
 
 type CountryPickerProps = {
   country: Country
   onCountry: (country: Country) => void
   className?: string
+  label?: string
 }
 
-export function CountryPicker({ country, onCountry, className }: CountryPickerProps) {
+export function CountryPicker({ country, onCountry, className, label }: CountryPickerProps) {
   const { t } = useTranslation()
-  const [showMore, setShowMore] = useState(!isPrimaryCountry(country))
-
-  const moreActive = showMore || !isPrimaryCountry(country)
+  const options = countries.map((id) => ({ id, label: t(`country.${id}`) }))
 
   return (
-    <div className={cn('grid gap-3', className)}>
-      <ChoiceGroup>
-        {primaryCountries.map((item) => (
-          <ChoiceButton
-            key={item}
-            active={country === item}
-            onClick={() => {
-              setShowMore(false)
-              onCountry(item)
-            }}
-          >
-            {t(`country.${item}`)}
-          </ChoiceButton>
-        ))}
-        <ChoiceButton
-          active={moreActive}
-          onClick={() => {
-            setShowMore(true)
-            if (isPrimaryCountry(country)) {
-              onCountry('other')
-            }
-          }}
-        >
-          {t('country.more')}
-        </ChoiceButton>
-      </ChoiceGroup>
-      {moreActive ? (
-        <div className="grid gap-2">
-          <p className="text-sm text-muted">{t('onboarding.countryMoreHint')}</p>
-          <ChoiceGroup>
-            {moreCountries.map((item) => (
-              <ChoiceButton key={item} active={country === item} onClick={() => onCountry(item)}>
-                {t(`country.${item}`)}
-              </ChoiceButton>
-            ))}
-          </ChoiceGroup>
-        </div>
-      ) : null}
+    <div className={cn(className)}>
+      <SearchSelect
+        label={label}
+        value={country}
+        onChange={(id) => {
+          if (countries.includes(id as Country)) onCountry(id as Country)
+        }}
+        options={options}
+      />
     </div>
   )
 }

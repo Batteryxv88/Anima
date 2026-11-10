@@ -106,7 +106,7 @@ export function StaffTechniquePage() {
             .catch(() => setError(t('staff.failed')))
         }}
       />
-      <Link to={returnTo || '/skills'} className="mb-3 inline-flex min-h-11 items-center text-sm text-plum lg:hidden">
+      <Link to={returnTo || '/skills'} className="mb-3 inline-flex min-h-11 items-center text-sm text-plum">
         {t('nav.back')}
       </Link>
       <PageHeader

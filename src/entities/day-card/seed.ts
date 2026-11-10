@@ -59,7 +59,7 @@ export function defaultDistressDayCard(): DayCard {
         ),
         fields: [
           field('stressBefore', 'scale', 'Стресс до', { min: 0, max: 10, spotlight: true }),
-          field('skill', 'skill', 'Какой навык', { spotlight: true }),
+          field('skill', 'skill', 'Какое упражнение', { spotlight: true }),
           field('action', 'textarea', 'Что конкретно я сделал(а)', { spotlight: true }),
           field('stressAfter', 'scale', 'Стресс после', { min: 0, max: 10, spotlight: true }),
           field('trigger', 'text', 'Время / триггер'),

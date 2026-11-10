@@ -16,7 +16,7 @@ export function DayCardsListPage() {
 
   return (
     <>
-      <Link to="/today" className="mb-3 inline-flex min-h-11 items-center text-sm text-plum lg:hidden">
+      <Link to="/today" className="mb-3 inline-flex min-h-11 items-center text-sm text-plum">
         {t('nav.back')}
       </Link>
       <PageHeader title={t('cards.title')} text={t('cards.text')} />

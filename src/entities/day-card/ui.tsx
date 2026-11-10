@@ -20,12 +20,20 @@ export function DayScale({
 }) {
   const steps = scaleSteps(field)
   const current = value === '' ? null : Number(value)
+  const picked = current != null && Number.isFinite(current)
+  const rangeInLabel = /\d+\s*[-–—/]\s*\d+/.test(label)
   return (
     <div>
-      {caption ?? (label ? <p className="mb-2 text-sm text-ink">{label}</p> : null)}
-      <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
+      {caption ? <div className="mb-1.5">{caption}</div> : label ? <p className="mb-1.5 text-sm text-ink">{label}</p> : null}
+      <div
+        className="grid overflow-hidden rounded-lg border border-line"
+        style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+        role="group"
+        aria-label={label}
+      >
         {steps.map((step) => {
           const active = current === step
+          const filled = picked && step <= current
           return (
             <button
               key={step}
@@ -33,11 +41,13 @@ export function DayScale({
               aria-pressed={active}
               onClick={() => onChange(String(step))}
               className={cn(
-                'flex min-h-10 min-w-10 items-center justify-center rounded-full border text-sm tabular-nums transition-colors duration-150',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/50',
+                '-mb-px -mr-px flex min-h-8 items-center justify-center border-b border-r border-line text-xs tabular-nums transition-colors duration-150',
+                'focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-plum/50',
                 active
-                  ? 'border-plum bg-plum text-white dark:text-ink'
-                  : 'border-line bg-card text-ink hover:border-plum/35',
+                  ? 'bg-plum text-white dark:text-ink'
+                  : filled
+                    ? 'bg-plum/15 text-ink hover:bg-plum/25'
+                    : 'bg-card text-ink hover:bg-plum/10',
               )}
             >
               {step}
@@ -45,6 +55,12 @@ export function DayScale({
           )
         })}
       </div>
+      {!rangeInLabel && steps.length > 1 ? (
+        <span className="mt-1 flex justify-between text-xs text-muted">
+          <span>{steps[0]}</span>
+          <span>{steps[steps.length - 1]}</span>
+        </span>
+      ) : null}
     </div>
   )
 }

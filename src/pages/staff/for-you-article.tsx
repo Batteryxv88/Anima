@@ -117,7 +117,7 @@ export function StaffForYouArticlePage() {
       />
       <Link
         to={`/staff/for-you/${groupId}`}
-        className="mb-3 inline-flex min-h-9 items-center text-sm text-plum lg:hidden"
+        className="mb-3 inline-flex min-h-9 items-center text-sm text-plum"
       >
         {t('nav.back')}
       </Link>

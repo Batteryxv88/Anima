@@ -24,10 +24,15 @@ export function normalizeScaleValue(value: number) {
   return clampToScale(Math.round((rounded / LEGACY_MAX) * SCALE_MAX))
 }
 
-/** 0 = worst on chart, 1 = best (before anxiety flip). */
+/** 0 = low end of the tapped 1–5, 1 = high end. Anxiety 5 is flooded. */
 export function scalePlotNorm(value: number) {
   const v = normalizeScaleValue(value)
   return (v - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)
+}
+
+/** 1↔5, 2↔4, 3 stays. Used once when flipping anxiety from “high = calm”. */
+export function invertScaleValue(value: number) {
+  return SCALE_MAX + SCALE_MIN - normalizeScaleValue(value)
 }
 
 export function scaleWordKey(kind: ScaleKind, value: number) {
@@ -40,11 +45,11 @@ export function scaleWordKey(kind: ScaleKind, value: number) {
     return 'scale.mood.super'
   }
   if (kind === 'anxiety') {
-    if (v === 1) return 'scale.anxiety.flooded'
-    if (v === 2) return 'scale.anxiety.very'
+    if (v === 1) return 'scale.anxiety.calm'
+    if (v === 2) return 'scale.anxiety.ok'
     if (v === 3) return 'scale.anxiety.tense'
-    if (v === 4) return 'scale.anxiety.ok'
-    return 'scale.anxiety.calm'
+    if (v === 4) return 'scale.anxiety.very'
+    return 'scale.anxiety.flooded'
   }
   if (v === 1) return 'scale.sleep.none'
   if (v === 2) return 'scale.sleep.broken'

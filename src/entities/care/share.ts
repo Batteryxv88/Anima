@@ -5,7 +5,11 @@ export type ShareScope = {
   assignments: boolean
   trend: boolean
   journal: boolean
+  journalNotes: boolean
+  journalThoughts: boolean
 }
+
+export type ShareScopeFlag = 'assignments' | 'trend' | 'journalNotes' | 'journalThoughts'
 
 export type Invite = {
   token: string
@@ -68,8 +72,19 @@ export type ShareNotes = {
 export const defaultScope = (): ShareScope => ({
   assignments: true,
   trend: true,
-  journal: true,
+  journal: false,
+  journalNotes: false,
+  journalThoughts: false,
 })
+
+export function setShareScope(scope: ShareScope, key: ShareScopeFlag, value: boolean): ShareScope {
+  const next = { ...scope, [key]: value }
+  return { ...next, journal: next.journalNotes || next.journalThoughts }
+}
+
+export function journalKindShared(scope: ShareScope, kind: JournalEntry['kind']) {
+  return kind === 'thought' ? scope.journalThoughts : scope.journalNotes
+}
 
 type ShareState = {
   patientLinks: CareLink[]

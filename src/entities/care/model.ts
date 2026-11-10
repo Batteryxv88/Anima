@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createId, todayId } from '@/shared/lib'
+import { createId, invertScaleValue, todayId } from '@/shared/lib'
 
 export type CheckIn = {
   date: string
@@ -276,6 +276,18 @@ export const useCareStore = create<CareState>()(
     }),
     {
       name: 'anima-care',
+      version: 1,
+      migrate: (persisted, version) => {
+        const data = (persisted ?? {}) as Partial<CareSnapshot>
+        if (version >= 1) return data
+        return {
+          ...data,
+          checkIns: (data.checkIns ?? []).map((item) => ({
+            ...item,
+            anxiety: invertScaleValue(item.anxiety),
+          })),
+        }
+      },
       merge: (persisted, current) => {
         const data = persisted as Partial<CareSnapshot> | undefined
         return {

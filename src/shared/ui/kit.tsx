@@ -10,13 +10,15 @@ export function PageHeader({
   title,
   text,
   action,
+  className,
 }: {
   title: string
   text?: string
   action?: ReactNode
+  className?: string
 }) {
   return (
-    <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
+    <header className={cn('mb-5 flex flex-wrap items-start justify-between gap-3', className)}>
       <div>
         <h1 className="text-[1.75rem] font-medium leading-tight tracking-tight text-ink">
           {title}
@@ -519,28 +521,33 @@ const scaleAccentText: Record<ScaleAccent, string> = {
 
 export function ScaleTap({
   label,
-  minLabel,
-  maxLabel,
+  icon,
   valueLabel,
   value,
   onChange,
   accent = 'plum',
 }: {
   label: string
-  minLabel: string
-  maxLabel: string
+  icon?: ReactNode
   valueLabel: string
   value: number
   onChange: (value: number) => void
   accent?: ScaleAccent
 }) {
   return (
-    <div>
-      <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-        <span className="text-ink">{label}</span>
-        <span className={cn('text-right font-medium', scaleAccentText[accent])}>{valueLabel}</span>
+    <div role="group" aria-label={label}>
+      <div className="mb-1.5 flex items-baseline justify-between gap-3">
+        <span className="flex min-w-0 items-center gap-1.5 text-sm text-ink">
+          {icon ? (
+            <span className={cn('flex size-4 shrink-0 items-center justify-center', scaleAccentText[accent])}>
+              {icon}
+            </span>
+          ) : null}
+          <span className="truncate">{label}</span>
+        </span>
+        <span className={cn('shrink-0 text-xs font-medium sm:text-sm', scaleAccentText[accent])}>{valueLabel}</span>
       </div>
-      <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
+      <div className="flex items-center gap-1">
         {scaleStepValues.map((step) => {
           const active = value === step
           return (
@@ -551,7 +558,7 @@ export function ScaleTap({
               aria-label={active ? `${step}, ${valueLabel}` : String(step)}
               onClick={() => onChange(step)}
               className={cn(
-                'flex min-h-10 min-w-10 items-center justify-center rounded-full border text-sm tabular-nums transition-colors duration-150',
+                'flex size-8 shrink-0 items-center justify-center rounded-full border text-xs tabular-nums transition-colors duration-150',
                 'focus-visible:outline-none focus-visible:ring-2',
                 scaleAccentRing[accent],
                 active
@@ -564,10 +571,6 @@ export function ScaleTap({
           )
         })}
       </div>
-      <span className="mt-1.5 flex justify-between text-xs text-muted">
-        <span>{minLabel}</span>
-        <span>{maxLabel}</span>
-      </span>
     </div>
   )
 }
@@ -642,7 +645,7 @@ export function SearchSelect({
   placeholder,
   empty,
 }: {
-  label: string
+  label?: string
   value: string
   onChange: (id: string) => void
   options: { id: string; label: string; hint?: string }[]
@@ -663,7 +666,7 @@ export function SearchSelect({
 
   return (
     <div>
-      <span className="mb-1.5 block text-sm text-muted">{label}</span>
+      {label ? <span className="mb-1.5 block text-sm text-muted">{label}</span> : null}
       <TextField
         role="combobox"
         aria-expanded={open}

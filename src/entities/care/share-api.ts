@@ -14,6 +14,7 @@ import { createId, isThisWeek } from '@/shared/lib'
 import { useCareStore, type CareSnapshot } from './model'
 import {
   defaultScope,
+  journalKindShared,
   useShareStore,
   type CareLink,
   type Invite,
@@ -37,10 +38,14 @@ function token() {
 
 function asScope(raw: unknown): ShareScope {
   const value = raw && typeof raw === 'object' ? (raw as ShareScope) : defaultScope()
+  const journalNotes = value.journalNotes === true
+  const journalThoughts = value.journalThoughts === true
   return {
     assignments: value.assignments !== false,
     trend: value.trend !== false,
-    journal: value.journal !== false,
+    journalNotes,
+    journalThoughts,
+    journal: journalNotes || journalThoughts,
   }
 }
 
@@ -271,9 +276,9 @@ function snapshotFromCare(link: CareLink, care: CareSnapshot, patientName?: stri
     scope: link.scope,
     updatedAt: new Date().toISOString(),
     checkIns: link.scope.trend ? care.checkIns.filter((item) => isThisWeek(item.date)) : [],
-    journal: link.scope.journal
-      ? care.journal.filter((item) => item.shareWithSpecialist && isThisWeek(item.at.slice(0, 10)))
-      : [],
+    journal: care.journal.filter(
+      (item) => isThisWeek(item.at.slice(0, 10)) && journalKindShared(link.scope, item.kind),
+    ),
     assignments: link.scope.assignments ? care.assignments.filter((item) => isThisWeek(item.createdAt.slice(0, 10))) : [],
     practices: care.practices.filter((item) => isThisWeek(item.at.slice(0, 10))),
     sessionNote: care.sessionNote,

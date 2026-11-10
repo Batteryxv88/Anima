@@ -35,11 +35,14 @@ export {
 } from './share-api'
 export {
   defaultScope,
+  journalKindShared,
+  setShareScope,
   useShareStore,
   type CareLink,
   type Invite,
   type ShareNotes,
   type ShareScope,
+  type ShareScopeFlag,
   type ShareSnapshot,
   type TherapistComment,
 } from './share'

@@ -8,6 +8,7 @@ export {
   SCALE_DEFAULT,
   SCALE_MAX,
   SCALE_MIN,
+  invertScaleValue,
   normalizeScaleValue,
   scalePlotNorm,
   scaleStepValues,

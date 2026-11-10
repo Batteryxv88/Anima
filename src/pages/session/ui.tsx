@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown } from 'lucide-react'
-import { useCareStore, useShareStore, type Practice } from '@/entities/care'
+import { journalKindShared, useCareStore, useShareStore, type Practice } from '@/entities/care'
 import { localeTags, type Locale } from '@/shared/config'
 import { cn, formatStamp, isThisWeek, startOfWeek, todayId, weekRangeLabel } from '@/shared/lib'
 import { Button, Card, PageHeader, TextArea } from '@/shared/ui'
@@ -71,12 +71,14 @@ export function SessionPage() {
   const assignments = useCareStore((state) => state.assignments)
   const journal = useCareStore((state) => state.journal)
   const comments = useShareStore((state) => state.comments)
+  const patientLinks = useShareStore((state) => state.patientLinks)
   const weekCheckIns = checkIns.filter((item) => isThisWeek(item.date))
   const weekPractices = practices.filter((item) => isThisWeek(item.at.slice(0, 10)))
   const weekAssignments = assignments.filter((item) => isThisWeek(item.createdAt.slice(0, 10)))
-  const weekShared = journal.filter(
-    (item) => item.shareWithSpecialist && isThisWeek(item.at.slice(0, 10)),
-  )
+  const weekShared = journal.filter((item) => {
+    if (!isThisWeek(item.at.slice(0, 10))) return false
+    return patientLinks.some((link) => !link.revoked && journalKindShared(link.scope, item.kind))
+  })
   const weekEmpty =
     weekCheckIns.length === 0 &&
     weekPractices.length === 0 &&

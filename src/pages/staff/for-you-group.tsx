@@ -52,7 +52,7 @@ export function StaffForYouGroupPage() {
   return (
     <>
       <NoticeLayer notice={notice} onClose={hide} />
-      <Link to="/staff/for-you" className="mb-3 inline-flex min-h-9 items-center text-sm text-plum lg:hidden">
+      <Link to="/staff/for-you" className="mb-3 inline-flex min-h-9 items-center text-sm text-plum">
         {t('nav.back')}
       </Link>
       <PageHeader

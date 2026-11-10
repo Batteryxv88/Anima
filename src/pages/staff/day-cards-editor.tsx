@@ -21,7 +21,6 @@ import {
 } from '@/entities/day-card'
 import { techniqueCopy, useTechniqueStore } from '@/entities/technique'
 import { isStaffRole, useUserStore } from '@/entities/user'
-import { SkillStepChips } from '@/widgets/day-card-form'
 import { type Locale } from '@/shared/config'
 import { cn, firestoreErrorKey } from '@/shared/lib'
 import {
@@ -180,7 +179,7 @@ export function StaffDayCardEditorPage() {
             .catch((caught) => setError(t(firestoreErrorKey(caught))))
         }}
       />
-      <Link to="/staff/day-cards" className="mb-3 inline-flex min-h-9 items-center text-sm text-plum lg:hidden">
+      <Link to="/staff/day-cards" className="mb-3 inline-flex min-h-9 items-center text-sm text-plum">
         {t('nav.back')}
       </Link>
       <PageHeader
@@ -531,11 +530,6 @@ function SectionEditor({
                     </Chip>
                   )
                 })}
-              </div>
-              <div className="pointer-events-none mt-2">
-                {(field.techniqueIds?.length ? field.techniqueIds : linkedIds).map((id) => (
-                  <SkillStepChips key={id} techniqueId={id} value="" onChange={() => undefined} />
-                ))}
               </div>
             </div>
           ) : null}

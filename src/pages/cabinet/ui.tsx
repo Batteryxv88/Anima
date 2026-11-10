@@ -122,7 +122,7 @@ function Notebook({ link }: { link: CareLink }) {
           <WeekWork assignments={[]} practices={share?.practices ?? []} />
         </Card>
       ) : null}
-      {link.scope.journal ? (
+      {link.scope.journalNotes || link.scope.journalThoughts ? (
         <Card>
           <h2 className="text-base font-medium">{t('journal.thisWeek')}</h2>
           {(share?.journal ?? []).length === 0 ? (
@@ -212,6 +212,11 @@ export function CabinetPage() {
 
   return (
     <>
+      {linkId ? (
+        <Link to="/cabinet" className="mb-3 inline-flex min-h-11 items-center text-sm text-plum">
+          {t('nav.back')}
+        </Link>
+      ) : null}
       <PageHeader
         title={t('cabinet.title')}
         text={linkId || therapistLinks.length <= 1 ? t('invite.asSpecialist') : t('cabinet.listText')}

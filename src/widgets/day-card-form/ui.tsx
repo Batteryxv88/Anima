@@ -27,8 +27,23 @@ import {
 import { type Locale } from '@/shared/config'
 import { Chip, HelpFold, TextArea, TextField } from '@/shared/ui'
 
-function FieldCaption({ field, locale }: { field: DayCardField; locale: Locale }) {
-  return <HelpFold title={fieldLabel(field, locale)} help={fieldExample(field, locale)} />
+function FieldCaption({
+  field,
+  locale,
+  title,
+}: {
+  field: DayCardField
+  locale: Locale
+  title?: string
+}) {
+  return <HelpFold title={title ?? fieldLabel(field, locale)} help={fieldExample(field, locale)} />
+}
+
+function looksLikeSkillPick(label: string, pickSkill: string) {
+  const value = label.trim().toLowerCase()
+  if (!value) return true
+  if (value === pickSkill.trim().toLowerCase()) return true
+  return value === 'какой навык' || value === 'which skill' || value === 'katera veščina'
 }
 
 export function SkillChoiceChips({
@@ -199,12 +214,17 @@ export function DayCardFieldControl({
     const nestedKey = innerSkillKey(field.id)
     const valueKey = innerSkillValueKey(field.id)
     const nestedValue = values[nestedKey] ?? ''
-    const technique = techniques.find((item) => item.id === value)
+    const techniqueId = value.trim()
+    const technique = techniqueId ? techniques.find((item) => item.id === techniqueId) : undefined
     const nested = technique ? innerSkills(technique) : []
     const selectedSkill = technique ? findInnerSkill(technique, nestedValue) : undefined
+    const storedLabel = fieldLabel(field, locale)
+    const exerciseTitle = looksLikeSkillPick(storedLabel, t('cards.pickSkill'))
+      ? t('cards.pickExercise')
+      : storedLabel
     return (
       <div>
-        {caption}
+        <FieldCaption field={field} locale={locale} title={exerciseTitle} />
         <SkillChoiceChips
           ids={linkedIdsForField(card, field)}
           value={value}
@@ -217,11 +237,11 @@ export function DayCardFieldControl({
           }}
           from={from}
         />
-        {nested.length > 0 ? (
+        {techniqueId && nested.length > 0 ? (
           <div className="mt-2">
             <p className="mb-1.5 text-sm text-muted">{t('cards.pickSkill')}</p>
             <SkillStepChips
-              techniqueId={value}
+              techniqueId={techniqueId}
               value={nestedValue}
               onChange={(next) => {
                 const prevId = selectedSkill?.id ?? nestedValue
@@ -243,14 +263,14 @@ export function DayCardFieldControl({
   }
   if (field.kind === 'skillStep') {
     const sourceId = field.sourceFieldId
-    const techniqueId = sourceId ? values[sourceId] ?? '' : card.techniqueIds[0] ?? ''
+    const techniqueId = sourceId ? (values[sourceId] ?? '').trim() : ''
     return (
       <div>
         {caption}
         {techniqueId ? (
           <SkillStepChips techniqueId={techniqueId} value={value} onChange={setValue} />
         ) : (
-          <p className="text-sm text-muted">{t('cards.noSkills')}</p>
+          <p className="text-sm text-muted">{t('cards.pickExerciseFirst')}</p>
         )}
       </div>
     )

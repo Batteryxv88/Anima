@@ -178,10 +178,11 @@ export function OnboardingPage() {
               </ChoiceButton>
             ))}
           </ChoiceGroup>
-          <div>
-            <p className="mb-2 text-sm font-medium">{t('onboarding.countryTitle')}</p>
-            <CountryPicker country={country} onCountry={setCountry} />
-          </div>
+          <CountryPicker
+            country={country}
+            onCountry={setCountry}
+            label={t('onboarding.countryTitle')}
+          />
         </div>
       ),
     },

@@ -12,7 +12,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useShareStore } from '@/entities/care'
 import { useUserStore } from '@/entities/user'
 import { APP_NAME, navItems } from '@/shared/config'
-import { cn, practiceFrom, staffReturnTo } from '@/shared/lib'
+import { cn } from '@/shared/lib'
 import { NoticeLayer, useNotice, useReturnNotice } from '@/shared/ui'
 import { NameStep } from './name-step'
 
@@ -49,48 +49,16 @@ export function AppShell() {
   const items = isSpecialist
     ? [{ to: '/cabinet', key: 'nav.cabinet', icon: 'cabinet' as const }, ...navItems]
     : navItems
-  const cabinetPerson = /\/cabinet\/.+/.test(location.pathname)
-  const nested =
-    location.pathname.startsWith('/skills/') ||
-    location.pathname.startsWith('/today/for-you/') ||
-    location.pathname === '/journal' ||
-    location.pathname.startsWith('/cards') ||
-    location.pathname.startsWith('/join/') ||
-    location.pathname.startsWith('/staff') ||
-    cabinetPerson ||
-    (!isSpecialist && location.pathname.startsWith('/cabinet'))
-  const skillEditor =
-    location.pathname === '/skills/new' || /^\/skills\/[^/]+\/edit$/.test(location.pathname)
-  const skillReturn = staffReturnTo(new URLSearchParams(location.search).get('returnTo'))
-  const cardsFill = /^\/cards\/[^/]+$/.test(location.pathname)
-  const fromToday = new URLSearchParams(location.search).get('from') === 'today'
-  const backTo = skillEditor
-    ? skillReturn || (location.pathname === '/skills/new' ? '/skills' : location.pathname.replace(/\/edit$/, ''))
-    : location.pathname.startsWith('/today/for-you/')
-      ? '/today'
-      : location.pathname.startsWith('/skills/')
-        ? practiceFrom(location.state)
-        : cardsFill
-          ? fromToday
-            ? '/today'
-            : '/cards'
-          : location.pathname === '/cards'
-            ? '/today'
-            : /^\/staff\/day-cards\/.+/.test(location.pathname)
-              ? '/staff/day-cards'
-              : cabinetPerson
-                ? '/cabinet'
-                : location.pathname.startsWith('/staff') ||
-                    location.pathname.startsWith('/cabinet') ||
-                    location.pathname.startsWith('/join/')
-                  ? '/profile'
-                  : '/today'
 
   return (
     <div className="anima-shell-bg min-h-dvh text-ink">
       <NoticeLayer notice={returned.notice} onClose={returned.hide} />
       <NoticeLayer notice={nameNotice.notice} onClose={nameNotice.hide} />
-      <aside className="fixed inset-y-0 left-0 hidden w-56 border-r border-line bg-card/80 p-4 lg:flex lg:flex-col">
+      <aside className="fixed inset-y-0 left-0 hidden w-56 bg-card/80 p-4 lg:flex lg:flex-col">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-10 translate-x-full bg-gradient-to-r from-card/50 to-transparent"
+        />
         <Link to="/today" className="block px-2 pb-6 text-lg font-medium tracking-tight text-ink">
           {APP_NAME}
         </Link>
@@ -127,31 +95,6 @@ export function AppShell() {
       </aside>
 
       <div className="lg:pl-56">
-        <header className="sticky top-0 z-10 hidden h-14 items-center justify-between gap-3 border-b border-line bg-canvas/90 px-4 backdrop-blur-sm lg:flex print:hidden">
-          <div className="flex min-w-0 items-center gap-2">
-            {nested ? (
-              <Link to={backTo} className="text-sm text-plum">
-                {t('nav.back')}
-              </Link>
-            ) : (
-              <Link to="/today" className="truncate text-base font-medium text-ink">
-                {APP_NAME}
-              </Link>
-            )}
-          </div>
-          <div className="flex min-w-0 items-center gap-1">
-            {isSpecialist ? (
-              <Link
-                to="/cabinet"
-                className="mr-1 max-w-[11rem] truncate rounded-full bg-plum/12 px-3 py-1.5 text-xs text-plum lg:max-w-none"
-                title={t('invite.asSpecialist')}
-              >
-                {t('invite.asSpecialist')}
-              </Link>
-            ) : null}
-          </div>
-        </header>
-
         <main className="mx-auto w-full min-w-0 max-w-xl px-4 pt-4 pb-24 lg:max-w-4xl lg:pt-6 lg:pb-10 md:max-w-3xl">
           {needName ? (
             <NameStep onSaved={() => nameNotice.show(t('common.savedNotice'), t('name.saved'))} />
