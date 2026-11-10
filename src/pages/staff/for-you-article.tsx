@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
@@ -48,8 +48,12 @@ export function StaffForYouArticlePage() {
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const { notice, show, hide } = useNotice()
+  const catalogKey = useRef(JSON.stringify(start))
 
   useEffect(() => {
+    const key = JSON.stringify(start)
+    if (key === catalogKey.current) return
+    catalogKey.current = key
     setDraft(start)
   }, [start])
 

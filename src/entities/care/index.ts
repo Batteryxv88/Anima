@@ -36,6 +36,7 @@ export {
 export {
   defaultScope,
   journalKindShared,
+  sameScope,
   setShareScope,
   useShareStore,
   type CareLink,

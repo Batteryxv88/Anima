@@ -36,7 +36,7 @@ export function NameStep({ onSaved }: { onSaved: () => void }) {
           setError('')
           setBusy(true)
           setDisplayName(trimmed)
-          void pushProfile(uid, { includeDisplayName: true })
+          void pushProfile(uid)
             .then(() => pushShareSnapshots(uid, trimmed))
             .then(() => onSaved())
             .catch(() => setError(t('auth.failed')))

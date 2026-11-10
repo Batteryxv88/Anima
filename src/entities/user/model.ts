@@ -70,6 +70,24 @@ export function isStaffRole(role: StaffRole) {
   return role === 'admin' || role === 'superadmin'
 }
 
+const persistName = 'anima-user'
+
+function readPersistedSession(): { uid: string | null; email: string | null } {
+  if (typeof window === 'undefined') return { uid: null, email: null }
+  try {
+    const raw = localStorage.getItem(persistName)
+    if (!raw) return { uid: null, email: null }
+    const parsed = JSON.parse(raw) as { state?: { uid?: unknown; email?: unknown } }
+    const uid = typeof parsed.state?.uid === 'string' && parsed.state.uid ? parsed.state.uid : null
+    const email = typeof parsed.state?.email === 'string' ? parsed.state.email : null
+    return { uid, email }
+  } catch {
+    return { uid: null, email: null }
+  }
+}
+
+const cachedSession = readPersistedSession()
+
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
@@ -81,8 +99,8 @@ export const useUserStore = create<UserState>()(
       mode: 'self',
       displayName: '',
       displayNameUid: null,
-      uid: null,
-      email: null,
+      uid: cachedSession.uid,
+      email: cachedSession.email,
       role: 'user',
       authReady: false,
       profileSynced: false,
@@ -98,7 +116,7 @@ export const useUserStore = create<UserState>()(
           displayNameUid: state.uid,
         })),
       setSession: (session) =>
-        set((state) => {
+        set(() => {
           if (!session) {
             return {
               uid: null,
@@ -107,13 +125,10 @@ export const useUserStore = create<UserState>()(
               profileSynced: false,
             }
           }
-          const keepName = session.uid === state.displayNameUid && Boolean(state.displayName.trim())
           return {
             uid: session.uid,
             email: session.email,
             role: 'user',
-            displayName: keepName ? state.displayName : '',
-            displayNameUid: keepName ? state.displayNameUid : null,
             profileSynced: false,
           }
         }),
@@ -141,7 +156,7 @@ export const useUserStore = create<UserState>()(
         }),
     }),
     {
-      name: 'anima-user',
+      name: persistName,
       partialize: (state) => ({
         onboardingComplete: state.onboardingComplete,
         language: state.language,
@@ -151,6 +166,8 @@ export const useUserStore = create<UserState>()(
         mode: state.mode,
         displayName: state.displayName,
         displayNameUid: state.displayNameUid,
+        uid: state.uid,
+        email: state.email,
       }),
       merge: (persisted, current) => ({ ...current, ...(persisted as Partial<UserState>) }),
     },

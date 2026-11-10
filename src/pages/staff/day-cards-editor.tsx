@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -72,8 +72,12 @@ export function StaffDayCardEditorPage() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [pick, setPick] = useState('')
   const { notice, show, hide } = useNotice()
+  const catalogKey = useRef(JSON.stringify(start))
 
   useEffect(() => {
+    const key = JSON.stringify(start)
+    if (key === catalogKey.current) return
+    catalogKey.current = key
     setDraft(start)
   }, [start])
 

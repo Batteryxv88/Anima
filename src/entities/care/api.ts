@@ -1,6 +1,6 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { getFirebaseDb } from '@/shared/firebase'
-import { invertScaleValue, normalizeScaleValue, withCloudLock } from '@/shared/lib'
+import { ifPayloadChanged, invertScaleValue, normalizeScaleValue, rememberPayload, withCloudLock } from '@/shared/lib'
 import { normalizeSkillRating } from '@/entities/technique/stats'
 import {
   useCareStore,
@@ -152,26 +152,29 @@ export async function pullCare(uid: string) {
       skillPrefs: asSkillPrefs(data.skillPrefs),
     }),
   )
+  rememberPayload(`userCare:${uid}`, careComparable())
+}
+
+function careComparable() {
+  const state = useCareStore.getState()
+  return {
+    checkIns: state.checkIns,
+    anxietyHighIsWorse: true,
+    assignments: state.assignments,
+    practices: state.practices,
+    journal: state.journal,
+    dayCardEntries: state.dayCardEntries,
+    sessionNote: state.sessionNote,
+    crisisPlan: state.crisisPlan,
+    skillPrefs: state.skillPrefs,
+  }
 }
 
 export async function pushCare(uid: string) {
   const db = getFirebaseDb()
   if (!db) return
-  const state = useCareStore.getState()
-  await setDoc(
-    doc(db, 'userCare', uid),
-    {
-      checkIns: state.checkIns,
-      anxietyHighIsWorse: true,
-      assignments: state.assignments,
-      practices: state.practices,
-      journal: state.journal,
-      dayCardEntries: state.dayCardEntries,
-      sessionNote: state.sessionNote,
-      crisisPlan: state.crisisPlan,
-      skillPrefs: state.skillPrefs,
-      updatedAt: new Date().toISOString(),
-    },
-    { merge: true },
+  const comparable = careComparable()
+  await ifPayloadChanged(`userCare:${uid}`, comparable, () =>
+    setDoc(doc(db, 'userCare', uid), { ...comparable, updatedAt: new Date().toISOString() }, { merge: true }),
   )
 }

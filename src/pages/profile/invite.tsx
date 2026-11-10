@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { create } from 'zustand'
@@ -9,6 +9,7 @@ import {
   inviteUrl,
   listenInvite,
   revokeLink,
+  sameScope,
   setShareScope,
   syncPatientShares,
   updateLinkScope,
@@ -45,6 +46,7 @@ function ScopeFields({
       <div className="flex shrink-0 gap-1.5" role="group" aria-label={label}>
         <Chip
           size="compact"
+          className="inline-flex min-w-[4.75rem] justify-center"
           active={!scope[key]}
           aria-pressed={!scope[key]}
           onClick={() => onChange(setShareScope(scope, key, false))}
@@ -53,6 +55,7 @@ function ScopeFields({
         </Chip>
         <Chip
           size="compact"
+          className="inline-flex min-w-[4.75rem] justify-center"
           active={scope[key]}
           aria-pressed={scope[key]}
           onClick={() => onChange(setShareScope(scope, key, true))}
@@ -216,9 +219,14 @@ function ShareLinkCard({
   const { t } = useTranslation()
   const [scope, setScope] = useState(link.scope)
   const [error, setError] = useState('')
+  const pending = useRef<ShareScope | null>(null)
 
   useEffect(() => {
-    setScope(link.scope)
+    if (pending.current) {
+      if (sameScope(link.scope, pending.current)) pending.current = null
+      return
+    }
+    setScope((current) => (sameScope(current, link.scope) ? current : link.scope))
   }, [link.scope])
 
   return (
@@ -227,11 +235,17 @@ function ShareLinkCard({
       <ScopeFields
         scope={scope}
         onChange={(next) => {
+          const prev = scope
+          pending.current = next
           setScope(next)
           setError('')
           void updateLinkScope(link.id, next)
             .then(() => syncPatientShares(uid, useUserStore.getState().displayName.trim()))
-            .catch(() => setError(t('invite.failed')))
+            .catch(() => {
+              pending.current = null
+              setScope(prev)
+              setError(t('invite.failed'))
+            })
         }}
       />
       <Button

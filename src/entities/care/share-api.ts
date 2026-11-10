@@ -8,13 +8,15 @@ import {
   setDoc,
   updateDoc,
   where,
+  type QuerySnapshot,
 } from 'firebase/firestore'
 import { getFirebaseDb } from '@/shared/firebase'
-import { createId, isThisWeek } from '@/shared/lib'
+import { createId, ifPayloadChanged, isThisWeek } from '@/shared/lib'
 import { useCareStore, type CareSnapshot } from './model'
 import {
   defaultScope,
   journalKindShared,
+  sameScope,
   useShareStore,
   type CareLink,
   type Invite,
@@ -191,8 +193,49 @@ export async function updateLinkScope(linkId: string, scope: ShareScope) {
   await updateDoc(doc(db, 'links', linkId), { scope })
 }
 
-function activeLinks(docs: { id: string; data: () => object }[]) {
-  return docs.map((item) => asLink(item.id, item.data() as Record<string, unknown>)).filter((item) => !item.revoked)
+type TimedLink = { link: CareLink; at: number; fromCache: boolean; pending: boolean }
+
+function timedLinks(snap: QuerySnapshot): TimedLink[] {
+  const at = Date.now()
+  const fromCache = snap.metadata.fromCache
+  const pending = snap.metadata.hasPendingWrites
+  return snap.docs.flatMap((doc) => {
+    const link = asLink(doc.id, doc.data() as Record<string, unknown>)
+    if (link.revoked) return []
+    return [{ link, at, fromCache, pending }]
+  })
+}
+
+function takeNewer(prev: TimedLink | undefined, incoming: TimedLink) {
+  if (!prev) return incoming
+  if (!prev.fromCache && incoming.fromCache) return prev
+  if (prev.pending && incoming.fromCache && !incoming.pending) return prev
+  if (incoming.at > prev.at) return incoming
+  return prev
+}
+
+function sameLink(a: CareLink, b: CareLink) {
+  return (
+    a.id === b.id &&
+    a.patientUid === b.patientUid &&
+    a.patientEmail === b.patientEmail &&
+    a.therapistUid === b.therapistUid &&
+    a.therapistEmail === b.therapistEmail &&
+    a.createdAt === b.createdAt &&
+    a.revoked === b.revoked &&
+    a.members.length === b.members.length &&
+    a.members.every((item, index) => item === b.members[index]) &&
+    sameScope(a.scope, b.scope)
+  )
+}
+
+function sameLinkList(a: CareLink[], b: CareLink[]) {
+  if (a.length !== b.length) return false
+  const byId = new Map(a.map((item) => [item.id, item]))
+  return b.every((item) => {
+    const prev = byId.get(item.id)
+    return prev ? sameLink(prev, item) : false
+  })
 }
 
 async function listLinks(field: 'patientUid' | 'therapistUid' | 'members', uid: string) {
@@ -200,7 +243,7 @@ async function listLinks(field: 'patientUid' | 'therapistUid' | 'members', uid: 
   if (!db) return []
   const filter = field === 'members' ? where('members', 'array-contains', uid) : where(field, '==', uid)
   const snap = await getDocs(query(collection(db, 'links'), filter))
-  return activeLinks(snap.docs)
+  return timedLinks(snap)
 }
 
 function hasMembers(link: CareLink) {
@@ -213,13 +256,17 @@ async function patchLinkMembers(link: CareLink) {
   await updateDoc(doc(db, 'links', link.id), { members: [link.patientUid, link.therapistUid] })
 }
 
-function publishLinks(uid: string, groups: CareLink[][]) {
-  const byId = new Map<string, CareLink>()
-  for (const item of groups.flat()) byId.set(item.id, item)
-  const all = [...byId.values()]
+function publishLinks(uid: string, groups: TimedLink[][]) {
+  const byId = new Map<string, TimedLink>()
+  for (const item of groups.flat()) {
+    byId.set(item.link.id, takeNewer(byId.get(item.link.id), item))
+  }
+  const all = [...byId.values()].map((item) => item.link)
   const patientLinks = all.filter((item) => item.patientUid === uid)
-  useShareStore.getState().setPatientLinks(patientLinks)
-  useShareStore.getState().setTherapistLinks(all.filter((item) => item.therapistUid === uid))
+  const therapistLinks = all.filter((item) => item.therapistUid === uid)
+  const state = useShareStore.getState()
+  if (!sameLinkList(state.patientLinks, patientLinks)) state.setPatientLinks(patientLinks)
+  if (!sameLinkList(state.therapistLinks, therapistLinks)) state.setTherapistLinks(therapistLinks)
   for (const link of patientLinks) {
     if (!hasMembers(link)) void patchLinkMembers(link)
   }
@@ -244,18 +291,32 @@ export function listenLinks(uid: string) {
     useShareStore.getState().clearShare()
     return () => {}
   }
-  const groups: CareLink[][] = [[], [], []]
+  const groups: TimedLink[][] = [[], [], []]
+  let lastPatientKey = ''
+  let pending = 3
   const publish = () => {
     publishLinks(uid, groups)
-    if (useShareStore.getState().patientLinks.length > 0) {
-      void consumeTherapistNotes(uid).then(() => pushShareSnapshots(uid))
+    const patient = useShareStore.getState().patientLinks
+    const key = patient
+      .map((item) => item.id)
+      .sort()
+      .join(',')
+    if (patient.length > 0) void consumeTherapistNotes(uid)
+    if (pending > 0) {
+      pending -= 1
+      if (pending === 0) lastPatientKey = key
+      return
+    }
+    if (key !== lastPatientKey) {
+      lastPatientKey = key
+      if (patient.length > 0) void pushShareSnapshots(uid)
     }
   }
   const watch = (index: number, filter: ReturnType<typeof where>) =>
     onSnapshot(
       query(collection(db, 'links'), filter),
       (snap) => {
-        groups[index] = activeLinks(snap.docs)
+        groups[index] = timedLinks(snap)
         publish()
       },
       () => publish(),
@@ -292,7 +353,13 @@ export async function pushShareSnapshots(uid: string, patientName?: string) {
   const links = useShareStore.getState().patientLinks.filter((item) => item.patientUid === uid && !item.revoked)
   const care = useCareStore.getState()
   await Promise.all(
-    links.map((link) => setDoc(doc(db, 'shares', link.id), snapshotFromCare(link, care, patientName), { merge: true })),
+    links.map((link) => {
+      const snapshot = snapshotFromCare(link, care, patientName)
+      const { updatedAt: _updatedAt, ...comparable } = snapshot
+      return ifPayloadChanged(`shares:${link.id}`, comparable, () =>
+        setDoc(doc(db, 'shares', link.id), snapshot, { merge: true }),
+      )
+    }),
   )
 }
 

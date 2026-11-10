@@ -82,6 +82,16 @@ export function setShareScope(scope: ShareScope, key: ShareScopeFlag, value: boo
   return { ...next, journal: next.journalNotes || next.journalThoughts }
 }
 
+export function sameScope(a: ShareScope, b: ShareScope) {
+  return (
+    a.assignments === b.assignments &&
+    a.trend === b.trend &&
+    a.journal === b.journal &&
+    a.journalNotes === b.journalNotes &&
+    a.journalThoughts === b.journalThoughts
+  )
+}
+
 export function journalKindShared(scope: ShareScope, kind: JournalEntry['kind']) {
   return kind === 'thought' ? scope.journalThoughts : scope.journalNotes
 }

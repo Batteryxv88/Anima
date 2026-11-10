@@ -1,8 +1,7 @@
 import { LifeBuoy } from 'lucide-react'
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
-import { isStaffRole, pullRole, signOutUser, useUserStore } from '@/entities/user'
+import { isStaffRole, signOutUser, useUserStore } from '@/entities/user'
 import { InvitePanel, SharePanel } from './invite'
 import { LanguageSwitch } from '@/features/switch-language'
 import { ThemeSwitch } from '@/features/toggle-theme'
@@ -26,13 +25,9 @@ export function ProfilePage() {
   const setMode = useUserStore((state) => state.setMode)
   const email = useUserStore((state) => state.email)
   const uid = useUserStore((state) => state.uid)
+  const authReady = useUserStore((state) => state.authReady)
   const role = useUserStore((state) => state.role)
   const staff = isStaffRole(role)
-
-  useEffect(() => {
-    if (!uid) return
-    void pullRole(uid, email)
-  }, [uid, email])
 
   return (
     <>
@@ -66,7 +61,7 @@ export function ProfilePage() {
                   {t('auth.signOut')}
                 </Button>
               </div>
-            ) : (
+            ) : authReady ? (
               <div className="flex items-center justify-between gap-2">
                 <p className="min-w-0 text-sm leading-snug text-muted">{t('auth.guest')}</p>
                 <Button
@@ -80,6 +75,8 @@ export function ProfilePage() {
                   {t('auth.signIn')}
                 </Button>
               </div>
+            ) : (
+              <div className="min-h-9" />
             )}
             {uid && staff ? (
               <div className="grid gap-1">
@@ -154,9 +151,9 @@ export function ProfilePage() {
                 <InvitePanel />
                 <SharePanel />
               </>
-            ) : (
+            ) : authReady ? (
               <p className="text-sm text-muted">{t('invite.needAccount')}</p>
-            )}
+            ) : null}
           </div>
         </Card>
       </div>

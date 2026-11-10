@@ -1,7 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import {
-  consumeTherapistNotes,
   listenLinks,
   listenPatientNotes,
   pullCare,
@@ -64,19 +63,27 @@ function CloudSync({ children }: { children: ReactNode }) {
     let timer = 0
     let stopLinks = () => {}
     let stopNotes = () => {}
-    const queue = () => {
+    let wantProfile = false
+    let wantCare = false
+    const flush = () => {
       if (isCloudLocked()) return
-      const uid = useUserStore.getState().uid
-      if (!uid) return
-      window.clearTimeout(timer)
-      timer = window.setTimeout(() => {
-        void pushProfile(uid)
+      const { uid, profileSynced, displayName } = useUserStore.getState()
+      if (!uid || !profileSynced) return
+      const doProfile = wantProfile
+      const doCare = wantCare
+      wantProfile = false
+      wantCare = false
+      if (doProfile) void pushProfile(uid)
+      if (doCare) {
         void pushCare(uid)
-        void pushShareSnapshots(uid, useUserStore.getState().displayName.trim())
         if (useShareStore.getState().patientLinks.length > 0) {
-          void consumeTherapistNotes(uid)
+          void pushShareSnapshots(uid, displayName.trim())
         }
-      }, 500)
+      }
+    }
+    const schedule = () => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(flush, 500)
     }
     const stopAuth = listenAuth(
       async (uid) => {
@@ -95,8 +102,30 @@ function CloudSync({ children }: { children: ReactNode }) {
         useShareStore.getState().clearShare()
       },
     )
-    const stopUser = useUserStore.subscribe(queue)
-    const stopCare = useCareStore.subscribe(queue)
+    const stopUser = useUserStore.subscribe((state, prev) => {
+      if (isCloudLocked()) return
+      if (!state.uid || !state.profileSynced) return
+      if (
+        state.language !== prev.language ||
+        state.theme !== prev.theme ||
+        state.largeText !== prev.largeText ||
+        state.country !== prev.country ||
+        state.mode !== prev.mode ||
+        state.displayName !== prev.displayName ||
+        state.onboardingComplete !== prev.onboardingComplete ||
+        state.email !== prev.email
+      ) {
+        wantProfile = true
+        schedule()
+      }
+    })
+    const stopCare = useCareStore.subscribe(() => {
+      if (isCloudLocked()) return
+      const { uid, profileSynced } = useUserStore.getState()
+      if (!uid || !profileSynced) return
+      wantCare = true
+      schedule()
+    })
     return () => {
       stopAuth()
       stopLinks()

@@ -97,9 +97,7 @@ export function SessionPage() {
         }
       />
       <div className="grid gap-4">
-        <p className="text-sm text-muted">
-          {t('session.range')}: {weekRangeLabel(localeTags[locale])}
-        </p>
+        <p className="text-sm text-muted">{weekRangeLabel(localeTags[locale])}</p>
         <Card>
           <h2 className="text-xs tracking-wide text-gold">{t('session.want')}</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted">{t('session.wantHint')}</p>

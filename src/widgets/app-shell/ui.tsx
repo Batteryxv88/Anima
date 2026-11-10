@@ -25,11 +25,6 @@ const icons = {
   profile: CircleUserRound,
 }
 
-function mobileNavLabel(to: string, key: string, t: (key: string) => string) {
-  if (to === '/today') return t('nav.home')
-  return t(key)
-}
-
 export function AppShell() {
   const { t } = useTranslation()
   const location = useLocation()
@@ -126,7 +121,7 @@ export function AppShell() {
               }
             >
               <Icon size={compact ? 18 : 20} strokeWidth={1.75} className="shrink-0" />
-              <span className="w-full truncate">{mobileNavLabel(item.to, item.key, t)}</span>
+              <span className="w-full truncate">{t(item.key)}</span>
             </NavLink>
           )
         })}

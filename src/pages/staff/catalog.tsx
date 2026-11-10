@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -59,8 +59,12 @@ export function StaffTechniquePage() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const catalogKey = useRef(JSON.stringify(start))
 
   useEffect(() => {
+    const key = JSON.stringify(start)
+    if (key === catalogKey.current) return
+    catalogKey.current = key
     setDraft(start)
   }, [start])
 

@@ -7,13 +7,14 @@ import {
   signInWithPopup,
   signInWithRedirect,
   signOut,
+  updateProfile,
   type User,
 } from 'firebase/auth'
 import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
 import { getFirebaseAuth, getFirebaseDb } from '@/shared/firebase'
 import { FOUNDER_EMAIL, type StaffRole } from '@/shared/config'
 import { useCareStore } from '@/entities/care/model'
-import { withCloudLock } from '@/shared/lib'
+import { ifPayloadChanged, rememberPayload, withCloudLock } from '@/shared/lib'
 import { pickRole, useUserStore } from './model'
 
 const googleProvider = new GoogleAuthProvider()
@@ -124,6 +125,7 @@ async function applySignedInUser(user: User, onSignedIn: (uid: string) => Promis
 export async function completeAuthRedirect(onSignedIn: (uid: string) => Promise<void>) {
   const auth = getFirebaseAuth()
   if (!auth) return null
+  if (!isGoogleRedirectPending()) return null
   try {
     const result = await getRedirectResult(auth)
     const user = result?.user ?? auth.currentUser
@@ -132,9 +134,7 @@ export async function completeAuthRedirect(onSignedIn: (uid: string) => Promise<
       await applySignedInUser(user, onSignedIn)
       return user
     }
-    if (isGoogleRedirectPending()) {
-      console.warn('[auth] Google redirect returned without a user session')
-    }
+    console.warn('[auth] Google redirect returned without a user session')
     return null
   } catch (error) {
     console.error('[auth] getRedirectResult failed', error)
@@ -149,27 +149,42 @@ export async function signOutUser() {
   useUserStore.getState().setSession(null)
 }
 
+function authDisplayName() {
+  return getFirebaseAuth()?.currentUser?.displayName?.trim() ?? ''
+}
+
 export async function pullProfile(uid: string) {
   const db = getFirebaseDb()
+  const authName = authDisplayName()
   if (!db) {
+    if (authName) useUserStore.getState().applyProfile({ displayName: authName })
     useUserStore.getState().setProfileSynced(true)
     return
   }
   try {
     const snap = await getDoc(doc(db, 'users', uid))
     if (!snap.exists()) {
+      if (authName) useUserStore.getState().applyProfile({ displayName: authName })
       await pushProfile(uid)
+      useUserStore.getState().setProfileSynced(true)
       return
     }
-    withCloudLock(() => useUserStore.getState().applyProfile(snap.data()))
-  } finally {
+    const data = snap.data()
+    const fromCloud = typeof data.displayName === 'string' ? data.displayName.trim() : ''
+    withCloudLock(() =>
+      useUserStore.getState().applyProfile({
+        ...data,
+        displayName: fromCloud || authName,
+      }),
+    )
+    rememberPayload(`users:${uid}`, profileComparable())
     useUserStore.getState().setProfileSynced(true)
+  } catch (error) {
+    console.error('[auth] pullProfile failed', error)
   }
 }
 
-export async function pushProfile(uid: string, options?: { includeDisplayName?: boolean }) {
-  const db = getFirebaseDb()
-  if (!db) return
+function profileComparable() {
   const state = useUserStore.getState()
   const payload: Record<string, unknown> = {
     language: state.language,
@@ -179,13 +194,26 @@ export async function pushProfile(uid: string, options?: { includeDisplayName?: 
     mode: state.mode,
     onboardingComplete: state.onboardingComplete,
     email: (state.email ?? '').trim().toLowerCase(),
-    updatedAt: new Date().toISOString(),
   }
   const name = state.displayName.trim()
-  if (name && (options?.includeDisplayName || state.profileSynced)) {
-    payload.displayName = name
+  if (name) payload.displayName = name
+  return payload
+}
+
+export async function pushProfile(uid: string) {
+  const db = getFirebaseDb()
+  if (!db) return
+  const comparable = profileComparable()
+  const name = typeof comparable.displayName === 'string' ? comparable.displayName : ''
+  if (name) {
+    const user = getFirebaseAuth()?.currentUser
+    if (user && user.uid === uid && user.displayName !== name) {
+      await updateProfile(user, { displayName: name })
+    }
   }
-  await setDoc(doc(db, 'users', uid), payload, { merge: true })
+  await ifPayloadChanged(`users:${uid}`, comparable, () =>
+    setDoc(doc(db, 'users', uid), { ...comparable, updatedAt: new Date().toISOString() }, { merge: true }),
+  )
 }
 
 export async function pullRole(uid: string, email: string | null) {

@@ -41,7 +41,7 @@ export const careModes = ['self', 'with-therapist'] as const
 export type CareMode = (typeof careModes)[number]
 
 export const navItems = [
-  { to: '/today', key: 'nav.today', icon: 'today' },
+  { to: '/today', key: 'nav.home', icon: 'today' },
   { to: '/skills', key: 'nav.skills', icon: 'skills' },
   { to: '/homework', key: 'nav.homework', icon: 'homework' },
   { to: '/session', key: 'nav.session', icon: 'session' },

@@ -7,7 +7,13 @@ import {
   initializeAuth,
   type Auth,
 } from 'firebase/auth'
-import { getFirestore, type Firestore } from 'firebase/firestore'
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  type Firestore,
+} from 'firebase/firestore'
 import { getStorage, type FirebaseStorage } from 'firebase/storage'
 
 let app: FirebaseApp | null = null
@@ -53,7 +59,15 @@ export function getFirebaseAuth() {
 export function getFirebaseDb() {
   const instance = getFirebaseApp()
   if (!instance) return null
-  if (!db) db = getFirestore(instance)
+  if (!db) {
+    try {
+      db = initializeFirestore(instance, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+      })
+    } catch {
+      db = getFirestore(instance)
+    }
+  }
   return db
 }
 

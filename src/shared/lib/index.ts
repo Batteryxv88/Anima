@@ -1,5 +1,5 @@
 export { cn } from './cn'
-export { isCloudLocked, withCloudLock } from './cloud-lock'
+export { ifPayloadChanged, isCloudLocked, rememberPayload, withCloudLock } from './cloud-lock'
 export { formatDay, formatStamp, isThisWeek, startOfWeek, todayId, weekDates, weekRangeLabel } from './dates'
 export { createId } from './id'
 export { isSignedIn, rememberAuthReturn } from './auth-gate'
