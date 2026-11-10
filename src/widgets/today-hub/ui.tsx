@@ -2,18 +2,11 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useCareStore } from '@/entities/care'
-import {
-  activeDayCards,
-  dayCardCopy,
-  eveningIsEmpty,
-  firstRepeaterSection,
-  repeaterRowCount,
-  useDayCardStore,
-} from '@/entities/day-card'
+import { activeDayCards, dayCardCopy, lastUsedAt, recentHomeDayCards, useDayCardStore } from '@/entities/day-card'
 import { activeForYouArticles, forYouText, pickDailyForYouArticle, useForYouStore } from '@/entities/for-you'
 import { isStaffRole, useUserStore } from '@/entities/user'
 import { APP_NAME, type Locale } from '@/shared/config'
-import { cn, todayId } from '@/shared/lib'
+import { cn } from '@/shared/lib'
 import {
   BrainMark,
   CalendarMark,
@@ -150,11 +143,10 @@ export function TodayDayCardBanner({ className }: { className?: string }) {
   const role = useUserStore((state) => state.role)
   const list = useDayCardStore((state) => state.list)
   const entries = useCareStore((state) => state.dayCardEntries)
-  const cards = activeDayCards(list)
-  const today = todayId()
+  const recents = recentHomeDayCards(list, entries)
 
-  if (cards.length === 0) {
-    if (!isStaffRole(role)) return null
+  if (recents.length === 0) {
+    if (!isStaffRole(role) || activeDayCards(list).length > 0) return null
     return (
       <Link to="/staff/day-cards" className={cn('mb-4 block border-dashed p-5', dayCardWash, className)}>
         <p className="relative z-10 text-sm font-medium text-plum">{t('cards.title')}</p>
@@ -164,59 +156,21 @@ export function TodayDayCardBanner({ className }: { className?: string }) {
     )
   }
 
-  if (cards.length > 1) {
-    return (
-      <section className={cn('mb-4 p-5', dayCardWash, className)}>
-        <p className="relative z-10 text-sm font-medium text-plum">{t('cards.title')}</p>
-        <div className="relative z-10 mt-3 grid gap-2">
-          {cards.map((card) => {
-            const copy = dayCardCopy(card, locale)
-            const count = repeaterRowCount(
-              card,
-              entries.find((item) => item.dayCardId === card.id && item.date === today),
-            )
-            const repeater = firstRepeaterSection(card)
-            const to = count
-              ? `/cards/${card.id}?from=today`
-              : `/cards/${card.id}?from=today&section=${repeater?.id ?? card.sections[0]?.id ?? ''}`
-            return (
-              <Link
-                key={card.id}
-                to={to}
-                className="rounded-xl border border-peach/30 bg-card/55 px-3 py-2.5 hover:border-plum/35"
-              >
-                <p className="text-sm font-medium text-ink">{copy.title}</p>
-                <p className="mt-0.5 text-xs text-muted">
-                  {count ? t('cards.progressBanner', { count }) : t('cards.emptyBanner')}
-                </p>
-              </Link>
-            )
-          })}
-        </div>
-        <SunsetHorizon className="absolute inset-x-0 bottom-0 h-12 text-coral opacity-80" />
-      </section>
-    )
-  }
-
-  const card = cards[0]
-  const copy = dayCardCopy(card, locale)
-  const entry = entries.find((item) => item.dayCardId === card.id && item.date === today)
-  const count = repeaterRowCount(card, entry)
-  const eveningEmpty = eveningIsEmpty(card, entry)
-  const repeater = firstRepeaterSection(card)
-  const recordTo = `/cards/${card.id}?from=today&section=${repeater?.id ?? card.sections[0]?.id ?? ''}`
-  const openTo = `/cards/${card.id}?from=today`
-  const ctaTo = count === 0 ? recordTo : openTo
-  const cta = count === 0 ? t('cards.record') : eveningEmpty ? t('cards.continue') : t('cards.openCard')
-  const lead =
-    count === 0 ? t('cards.emptyBanner') : eveningEmpty ? t('cards.progressBanner', { count }) : t('cards.doneBanner')
+  const unused = !lastUsedAt(recents[0], entries)
 
   return (
-    <Link to={ctaTo} className={cn('mb-4 block p-5 hover:border-plum/30', dayCardWash, className)}>
+    <Link to="/cards" className={cn('mb-4 block p-5', dayCardWash, className)}>
       <p className="relative z-10 text-xs font-medium uppercase tracking-wide text-plum">{t('cards.title')}</p>
-      <p className="relative z-10 mt-1 text-lg font-medium text-ink">{copy.title}</p>
-      <p className="relative z-10 mt-2 text-sm leading-relaxed text-muted">{lead}</p>
-      <p className="relative z-10 mt-3 text-sm font-medium text-plum">{cta}</p>
+      <ul className="relative z-10 mt-1 grid gap-1">
+        {recents.map((card) => (
+          <li key={card.id} className="text-lg font-medium text-ink">
+            {dayCardCopy(card, locale).title}
+          </li>
+        ))}
+      </ul>
+      {unused ? (
+        <p className="relative z-10 mt-2 text-sm leading-relaxed text-muted">{t('cards.emptyBanner')}</p>
+      ) : null}
       <SunsetHorizon className="absolute inset-x-0 bottom-0 h-14 text-coral opacity-80" />
     </Link>
   )

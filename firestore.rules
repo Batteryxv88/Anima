@@ -81,6 +81,15 @@ service cloud.firestore {
         && request.resource.data.ratingSum >= 0;
     }
 
+    match /dayCardStats/{id} {
+      allow read: if true;
+      allow create, update: if signedIn()
+        && request.resource.data.ratingSum is number
+        && request.resource.data.ratingCount is number
+        && request.resource.data.ratingCount >= 0
+        && request.resource.data.ratingSum >= 0;
+    }
+
     match /userCare/{uid} {
       allow read, write: if isOwner(uid);
     }

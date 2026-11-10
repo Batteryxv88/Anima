@@ -13,6 +13,11 @@ export {
 } from './api'
 export {
   activeDayCards,
+  dayCardMatchesSearch,
+  lastUsedAt,
+  latestDayCardEntry,
+  recentHomeDayCards,
+  sortDayCardsByUse,
   dayCardCadences,
   dayCardCopy,
   schools,

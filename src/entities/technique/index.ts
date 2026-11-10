@@ -12,9 +12,14 @@ export {
 } from './api'
 export {
   averageRating,
+  backfillRatingStat,
+  commitItemRating,
+  listenDayCardStats,
   listenTechniqueStats,
   normalizeSkillRating,
+  useDayCardStatsStore,
   useTechniqueStatsStore,
+  type StatsKind,
   type TechniqueStats,
 } from './stats'
 export { uploadTechniqueCover } from './cover'

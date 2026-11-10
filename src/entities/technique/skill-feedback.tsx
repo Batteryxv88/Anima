@@ -2,13 +2,15 @@ import { Heart, Star } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { setSkillLike, setSkillRating } from '@/entities/care'
+import { setCardLike, setCardRating, setSkillLike, setSkillRating } from '@/entities/care'
 import { useCareStore } from '@/entities/care/model'
 import { useUserStore } from '@/entities/user'
 import { cn, rememberAuthReturn } from '@/shared/lib'
-import { averageRating, backfillSkillRatingStat, useTechniqueStatsStore } from './stats'
+import { averageRating, backfillRatingStat, statsStore, type StatsKind } from './stats'
 
 const starSteps = [1, 2, 3, 4, 5] as const
+
+export type FeedbackKind = StatsKind
 
 function useRequireSignIn() {
   const navigate = useNavigate()
@@ -22,17 +24,37 @@ function useRequireSignIn() {
   }, [location.pathname, location.search, navigate, uid])
 }
 
+function useItemLiked(kind: FeedbackKind, itemId: string) {
+  const uid = useUserStore((state) => state.uid)
+  return useCareStore((state) => {
+    if (!uid) return false
+    const bag = kind === 'card' ? state.cardPrefs : state.skillPrefs
+    return Boolean(bag[itemId]?.liked)
+  })
+}
+
+function useItemRating(kind: FeedbackKind, itemId: string) {
+  const uid = useUserStore((state) => state.uid)
+  return useCareStore((state) => {
+    if (!uid) return undefined
+    const bag = kind === 'card' ? state.cardPrefs : state.skillPrefs
+    return bag[itemId]?.rating
+  })
+}
+
 export function SkillAverageRating({
   techniqueId,
+  kind = 'skill',
   className,
   compact,
 }: {
   techniqueId: string
+  kind?: FeedbackKind
   className?: string
   compact?: boolean
 }) {
   const { t } = useTranslation()
-  const stats = useTechniqueStatsStore((state) => state.byId[techniqueId])
+  const stats = statsStore(kind)((state) => state.byId[techniqueId])
   const avg = averageRating(stats)
   if (avg == null) return null
   const count = stats?.ratingCount ?? 0
@@ -61,21 +83,20 @@ export function SkillAverageRating({
 
 export function SkillLikeButton({
   techniqueId,
+  kind = 'skill',
   className,
   compact,
   ghost,
 }: {
   techniqueId: string
+  kind?: FeedbackKind
   className?: string
   compact?: boolean
   ghost?: boolean
 }) {
   const { t } = useTranslation()
-  const uid = useUserStore((state) => state.uid)
   const requireSignIn = useRequireSignIn()
-  const liked = useCareStore((state) =>
-    uid ? Boolean(state.skillPrefs[techniqueId]?.liked) : false,
-  )
+  const liked = useItemLiked(kind, techniqueId)
 
   return (
     <button
@@ -101,7 +122,8 @@ export function SkillLikeButton({
         event.preventDefault()
         event.stopPropagation()
         if (!requireSignIn()) return
-        setSkillLike(techniqueId, !liked)
+        if (kind === 'card') setCardLike(techniqueId, !liked)
+        else setSkillLike(techniqueId, !liked)
       }}
     >
       <Heart
@@ -113,18 +135,24 @@ export function SkillLikeButton({
   )
 }
 
-export function SkillStarRating({ techniqueId }: { techniqueId: string }) {
+export function SkillStarRating({
+  techniqueId,
+  kind = 'skill',
+}: {
+  techniqueId: string
+  kind?: FeedbackKind
+}) {
   const { t } = useTranslation()
   const uid = useUserStore((state) => state.uid)
   const requireSignIn = useRequireSignIn()
-  const rating = useCareStore((state) => (uid ? state.skillPrefs[techniqueId]?.rating : undefined))
+  const rating = useItemRating(kind, techniqueId)
   const hasRating = rating != null && rating >= 1 && rating <= 5
   const [animTick, setAnimTick] = useState(0)
 
   useEffect(() => {
     if (!uid || rating == null) return
-    void backfillSkillRatingStat(techniqueId, rating)
-  }, [techniqueId, rating, uid])
+    void backfillRatingStat(kind, techniqueId, rating)
+  }, [kind, techniqueId, rating, uid])
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -150,7 +178,8 @@ export function SkillStarRating({ techniqueId }: { techniqueId: string }) {
               )}
               onClick={() => {
                 if (!requireSignIn()) return
-                void setSkillRating(techniqueId, step).then((ok) => {
+                const save = kind === 'card' ? setCardRating : setSkillRating
+                void save(techniqueId, step).then((ok) => {
                   if (ok) setAnimTick((value) => value + 1)
                 })
               }}

@@ -83,6 +83,7 @@ export type CareSnapshot = {
   sessionNote: string
   crisisPlan: CrisisPlan
   skillPrefs: Record<string, SkillPref>
+  cardPrefs: Record<string, SkillPref>
 }
 
 type CareState = CareSnapshot & {
@@ -112,11 +113,32 @@ type CareState = CareSnapshot & {
   setCrisisPlan: (crisisPlan: CrisisPlan) => void
   setSkillLike: (techniqueId: string, liked: boolean) => void
   setSkillRating: (techniqueId: string, rating: number | undefined) => void
+  setCardLike: (cardId: string, liked: boolean) => void
+  setCardRating: (cardId: string, rating: number | undefined) => void
   clearSkillPrefs: () => void
   replaceCare: (payload: CareSnapshot) => void
 }
 
 const emptyPlan: CrisisPlan = { firstMinutes: '', whoToCall: '', avoid: '' }
+
+function withLike(bag: Record<string, SkillPref>, id: string, liked: boolean) {
+  const current = bag[id] ?? {}
+  if (liked) return { ...bag, [id]: { ...current, liked: true } }
+  if (current.rating == null) return { ...bag, [id]: { liked: false } }
+  return { ...bag, [id]: { rating: current.rating, liked: false } }
+}
+
+function withRating(bag: Record<string, SkillPref>, id: string, rating: number | undefined) {
+  const current = bag[id] ?? {}
+  const nextRating = rating != null && rating >= 1 && rating <= 5 ? rating : undefined
+  const next: SkillPref = { ...current, ...(nextRating ? { rating: nextRating } : {}) }
+  if (!nextRating) delete next.rating
+  if (!next.liked && next.rating == null) {
+    const { [id]: _drop, ...rest } = bag
+    return rest
+  }
+  return { ...bag, [id]: next }
+}
 
 export const useCareStore = create<CareState>()(
   persist(
@@ -129,6 +151,7 @@ export const useCareStore = create<CareState>()(
       sessionNote: '',
       crisisPlan: emptyPlan,
       skillPrefs: {},
+      cardPrefs: {},
       saveCheckIn: (entry) => {
         const date = entry.date ?? todayId()
         const next = get().checkIns.filter((item) => item.date !== date)
@@ -244,33 +267,17 @@ export const useCareStore = create<CareState>()(
       setSessionNote: (sessionNote) => set({ sessionNote }),
       setCrisisPlan: (crisisPlan) => set({ crisisPlan }),
       setSkillLike: (techniqueId, liked) =>
-        set((state) => {
-          const current = state.skillPrefs[techniqueId] ?? {}
-          const next: SkillPref = { ...current, ...(liked ? { liked: true } : {}) }
-          if (!liked) delete next.liked
-          if (!next.liked && next.rating == null) {
-            const { [techniqueId]: _drop, ...rest } = state.skillPrefs
-            return { skillPrefs: rest }
-          }
-          return { skillPrefs: { ...state.skillPrefs, [techniqueId]: next } }
-        }),
+        set((state) => ({ skillPrefs: withLike(state.skillPrefs, techniqueId, liked) })),
       setSkillRating: (techniqueId, rating) =>
-        set((state) => {
-          const current = state.skillPrefs[techniqueId] ?? {}
-          const nextRating = rating != null && rating >= 1 && rating <= 5 ? rating : undefined
-          const next: SkillPref = { ...current, ...(nextRating ? { rating: nextRating } : {}) }
-          if (!nextRating) delete next.rating
-          if (!next.liked && next.rating == null) {
-            const { [techniqueId]: _drop, ...rest } = state.skillPrefs
-            return { skillPrefs: rest }
-          }
-          return { skillPrefs: { ...state.skillPrefs, [techniqueId]: next } }
-        }),
-      clearSkillPrefs: () => set({ skillPrefs: {} }),
+        set((state) => ({ skillPrefs: withRating(state.skillPrefs, techniqueId, rating) })),
+      setCardLike: (cardId, liked) => set((state) => ({ cardPrefs: withLike(state.cardPrefs, cardId, liked) })),
+      setCardRating: (cardId, rating) => set((state) => ({ cardPrefs: withRating(state.cardPrefs, cardId, rating) })),
+      clearSkillPrefs: () => set({ skillPrefs: {}, cardPrefs: {} }),
       replaceCare: (payload) =>
         set({
           ...payload,
           skillPrefs: payload.skillPrefs ?? {},
+          cardPrefs: payload.cardPrefs ?? {},
           dayCardEntries: payload.dayCardEntries ?? [],
         }),
     }),
@@ -295,6 +302,7 @@ export const useCareStore = create<CareState>()(
           ...data,
           dayCardEntries: Array.isArray(data?.dayCardEntries) ? data.dayCardEntries : [],
           skillPrefs: data?.skillPrefs ?? current.skillPrefs,
+          cardPrefs: data?.cardPrefs ?? current.cardPrefs,
         }
       },
     },

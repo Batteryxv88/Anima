@@ -3,6 +3,8 @@ import { getFirebaseAuth } from '@/shared/firebase'
 import { create } from 'zustand'
 import { getFirebaseDb } from '@/shared/firebase'
 
+export type StatsKind = 'skill' | 'card'
+
 export type TechniqueStats = {
   ratingSum: number
   ratingCount: number
@@ -13,10 +15,23 @@ type StatsState = {
   setById: (byId: Record<string, TechniqueStats>) => void
 }
 
-export const useTechniqueStatsStore = create<StatsState>()((set) => ({
-  byId: {},
-  setById: (byId) => set({ byId }),
-}))
+function createStatsStore() {
+  return create<StatsState>()((set) => ({
+    byId: {},
+    setById: (byId) => set({ byId }),
+  }))
+}
+
+export const useTechniqueStatsStore = createStatsStore()
+export const useDayCardStatsStore = createStatsStore()
+
+export function statsStore(kind: StatsKind) {
+  return kind === 'card' ? useDayCardStatsStore : useTechniqueStatsStore
+}
+
+function statsCollection(kind: StatsKind) {
+  return kind === 'card' ? 'dayCardStats' : 'techniqueStats'
+}
 
 export function normalizeSkillRating(value: unknown): number | undefined {
   const n = typeof value === 'number' ? value : Number(value)
@@ -31,14 +46,16 @@ export function averageRating(stats: TechniqueStats | undefined) {
   return stats.ratingSum / stats.ratingCount
 }
 
-export function listenTechniqueStats() {
+function listenStats(kind: StatsKind) {
   const db = getFirebaseDb()
+  const store = statsStore(kind)
+  const name = statsCollection(kind)
   if (!db) {
-    useTechniqueStatsStore.getState().setById({})
+    store.getState().setById({})
     return () => {}
   }
   return onSnapshot(
-    collection(db, 'techniqueStats'),
+    collection(db, name),
     (snap) => {
       const byId: Record<string, TechniqueStats> = {}
       for (const item of snap.docs) {
@@ -48,29 +65,38 @@ export function listenTechniqueStats() {
           ratingCount: Number(data.ratingCount ?? 0),
         }
       }
-      useTechniqueStatsStore.getState().setById(byId)
+      store.getState().setById(byId)
     },
     (error) => {
-      console.error('[techniqueStats] listen failed', error)
+      console.error(`[${name}] listen failed`, error)
     },
   )
 }
 
-export async function commitSkillRating(
-  techniqueId: string,
+export function listenTechniqueStats() {
+  return listenStats('skill')
+}
+
+export function listenDayCardStats() {
+  return listenStats('card')
+}
+
+export async function commitItemRating(
+  kind: StatsKind,
+  itemId: string,
   previous: number | undefined,
   next: number | undefined,
 ) {
   const db = getFirebaseDb()
   if (!db) throw new Error('Firebase not configured')
   const auth = getFirebaseAuth()
-  if (!auth?.currentUser) throw new Error('Sign in required to save skill ratings')
+  if (!auth?.currentUser) throw new Error('Sign in required to save ratings')
 
   let oldR = normalizeSkillRating(previous)
   const newR = normalizeSkillRating(next)
   if (newR == null && oldR == null) return
 
-  const statsRef = doc(db, 'techniqueStats', techniqueId)
+  const statsRef = doc(db, statsCollection(kind), itemId)
 
   if (oldR === newR && newR != null) {
     const pre = await getDoc(statsRef)
@@ -102,19 +128,31 @@ export async function commitSkillRating(
   })
 }
 
-/** Push a stored user rating into techniqueStats when the aggregate doc is still empty. */
-export async function backfillSkillRatingStat(techniqueId: string, rating: number) {
+export async function commitSkillRating(
+  techniqueId: string,
+  previous: number | undefined,
+  next: number | undefined,
+) {
+  await commitItemRating('skill', techniqueId, previous, next)
+}
+
+/** Push a stored user rating into the aggregate doc when it is still empty. */
+export async function backfillRatingStat(kind: StatsKind, itemId: string, rating: number) {
   const next = normalizeSkillRating(rating)
   if (!next) return
   const db = getFirebaseDb()
   if (!db) return
   if (!getFirebaseAuth()?.currentUser) return
-  const pre = await getDoc(doc(db, 'techniqueStats', techniqueId))
+  const pre = await getDoc(doc(db, statsCollection(kind), itemId))
   const count = Number(pre.data()?.ratingCount ?? 0)
   if (pre.exists() && count > 0) return
   try {
-    await commitSkillRating(techniqueId, undefined, next)
+    await commitItemRating(kind, itemId, undefined, next)
   } catch (error) {
-    console.error('[skillRating] backfill failed', error)
+    console.error('[rating] backfill failed', error)
   }
+}
+
+export async function backfillSkillRatingStat(techniqueId: string, rating: number) {
+  await backfillRatingStat('skill', techniqueId, rating)
 }

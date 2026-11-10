@@ -11,7 +11,7 @@ import {
 } from '@/entities/care'
 import { listenDayCards } from '@/entities/day-card'
 import { listenForYou } from '@/entities/for-you'
-import { listenTechniqueStats, listenTechniques } from '@/entities/technique'
+import { listenDayCardStats, listenTechniqueStats, listenTechniques } from '@/entities/technique'
 import { listenAuth, pullProfile, pushProfile, useUserStore } from '@/entities/user'
 import { isCloudLocked } from '@/shared/lib'
 import { i18n } from '@/shared/i18n'
@@ -49,11 +49,13 @@ function CloudSync({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stopTechniques = listenTechniques()
     const stopStats = listenTechniqueStats()
+    const stopCardStats = listenDayCardStats()
     const stopForYou = listenForYou()
     const stopDayCards = listenDayCards()
     return () => {
       stopTechniques()
       stopStats()
+      stopCardStats()
       stopForYou()
       stopDayCards()
     }

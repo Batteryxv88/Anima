@@ -24,6 +24,7 @@ import {
   type DayCardSectionAnswers,
   useDayCardStore,
 } from '@/entities/day-card'
+import { SkillLikeButton, SkillStarRating } from '@/entities/technique'
 import { DayCardFieldControl, SkillStepsPreview } from '@/widgets/day-card-form'
 import { isStaffRole, useUserStore } from '@/entities/user'
 import { localeTags, type Locale } from '@/shared/config'
@@ -308,16 +309,19 @@ export function DayCardFillPage() {
       </Link>
       <PageHeader
         title={copy.title}
-        text={copy.about}
+        text={copy.about.trim() ? <RichText text={copy.about} /> : undefined}
         action={
-          staff ? (
-            <Link
-              to={`/staff/day-cards/${card.id}`}
-              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink hover:border-plum/35"
-            >
-              {t('staff.editDayCard')}
-            </Link>
-          ) : null
+          <div className="flex items-center gap-2">
+            <SkillLikeButton kind="card" techniqueId={card.id} ghost />
+            {staff ? (
+              <Link
+                to={`/staff/day-cards/${card.id}`}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink hover:border-plum/35"
+              >
+                {t('staff.editDayCard')}
+              </Link>
+            ) : null}
+          </div>
         }
       />
       <div className="mb-3">
@@ -383,6 +387,7 @@ export function DayCardFillPage() {
             {renderSection(section)}
           </div>
         ))}
+        <SkillStarRating kind="card" techniqueId={card.id} />
       </div>
     </>
   )

@@ -1,5 +1,5 @@
 export { pullCare, pushCare } from './api'
-export { isSkillLiked, setSkillLike, setSkillRating, skillRating } from './skill-prefs'
+export { isSkillLiked, setCardLike, setCardRating, setSkillLike, setSkillRating, skillRating } from './skill-prefs'
 export {
   useCareStore,
   type Assignment,

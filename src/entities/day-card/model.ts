@@ -159,6 +159,51 @@ export function activeDayCards(cards: DayCard[]) {
     .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id))
 }
 
+export function lastUsedAt(card: DayCard, entries: DayCardEntry[]) {
+  let at = ''
+  for (const entry of entries) {
+    if (entry.dayCardId !== card.id || !entryHasContent(card, entry)) continue
+    const stamp = entry.updatedAt || entry.date
+    if (stamp.localeCompare(at) > 0) at = stamp
+  }
+  return at
+}
+
+export function latestDayCardEntry(card: DayCard, entries: DayCardEntry[]) {
+  let best: DayCardEntry | undefined
+  for (const entry of entries) {
+    if (entry.dayCardId !== card.id || !entryHasContent(card, entry)) continue
+    const stamp = entry.updatedAt || entry.date
+    const bestStamp = best ? best.updatedAt || best.date : ''
+    if (!best || stamp.localeCompare(bestStamp) > 0) best = entry
+  }
+  return best
+}
+
+export function sortDayCardsByUse(cards: DayCard[], entries: DayCardEntry[]) {
+  return cards.slice().sort((a, b) => {
+    const atA = lastUsedAt(a, entries)
+    const atB = lastUsedAt(b, entries)
+    if (atA && atB) return atB.localeCompare(atA) || a.order - b.order || a.id.localeCompare(b.id)
+    if (atA) return -1
+    if (atB) return 1
+    return a.order - b.order || a.id.localeCompare(b.id)
+  })
+}
+
+export function recentHomeDayCards(cards: DayCard[], entries: DayCardEntry[], limit = 3) {
+  const sorted = sortDayCardsByUse(activeDayCards(cards), entries)
+  const used = sorted.filter((card) => lastUsedAt(card, entries))
+  if (used.length > 0) return used.slice(0, limit)
+  return sorted.slice(0, 1)
+}
+
+export function dayCardMatchesSearch(card: DayCard, locale: Locale, needle: string, schoolLabel: string) {
+  const copy = dayCardCopy(card, locale)
+  const hay = `${copy.title} ${copy.about} ${schoolLabel}`.toLowerCase()
+  return hay.includes(needle.trim().toLowerCase())
+}
+
 export function firstRepeaterSection(card: DayCard) {
   return card.sections.find((item) => item.kind === 'repeater')
 }

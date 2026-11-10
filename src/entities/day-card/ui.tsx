@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { SkillAverageRating, SkillLikeButton } from '@/entities/technique'
 import { type Locale } from '@/shared/config'
 import { cn } from '@/shared/lib'
 import { dayCardCopy, scaleSteps, type DayCard, type DayCardField } from './model'
@@ -78,13 +79,16 @@ export function DayCardTile({
   const locale = i18n.language as Locale
   const copy = dayCardCopy(card, locale)
   return (
-    <Link
-      to={to}
-      className="block rounded-2xl border border-line border-l-4 border-l-plum bg-card p-5 shadow-sm shadow-plum/5 hover:border-plum/30"
-    >
-      <p className="text-xs font-medium uppercase tracking-wide text-plum">{t(`school.${card.school}`)}</p>
-      <h2 className="mt-1 text-lg font-medium text-ink">{copy.title}</h2>
-      {hint ? <p className="mt-2 text-sm leading-relaxed text-muted">{hint}</p> : null}
-    </Link>
+    <div className="relative rounded-2xl border border-line border-l-4 border-l-plum bg-card shadow-sm shadow-plum/5 hover:border-plum/30">
+      <div className="absolute right-2 top-2 z-10 flex items-center gap-1.5">
+        <SkillAverageRating kind="card" techniqueId={card.id} compact />
+        <SkillLikeButton kind="card" techniqueId={card.id} ghost />
+      </div>
+      <Link to={to} className="block p-5 pr-24">
+        <p className="text-xs font-medium uppercase tracking-wide text-plum">{t(`school.${card.school}`)}</p>
+        <h2 className="mt-1 text-lg font-medium text-ink">{copy.title}</h2>
+        {hint ? <p className="mt-2 text-sm leading-relaxed text-muted">{hint}</p> : null}
+      </Link>
+    </div>
   )
 }

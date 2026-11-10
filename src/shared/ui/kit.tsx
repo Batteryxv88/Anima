@@ -13,7 +13,7 @@ export function PageHeader({
   className,
 }: {
   title: string
-  text?: string
+  text?: ReactNode
   action?: ReactNode
   className?: string
 }) {
@@ -23,7 +23,9 @@ export function PageHeader({
         <h1 className="text-[1.75rem] font-medium leading-tight tracking-tight text-ink">
           {title}
         </h1>
-        {text ? <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">{text}</p> : null}
+        {text ? (
+          <p className="mt-2 max-w-prose whitespace-pre-line text-sm leading-relaxed text-muted">{text}</p>
+        ) : null}
       </div>
       {action}
     </header>

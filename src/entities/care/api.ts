@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { getFirebaseDb } from '@/shared/firebase'
 import { ifPayloadChanged, invertScaleValue, normalizeScaleValue, rememberPayload, withCloudLock } from '@/shared/lib'
 import { normalizeSkillRating } from '@/entities/technique/stats'
@@ -19,11 +19,20 @@ function asSkillPrefs(raw: unknown): Record<string, SkillPref> {
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
     if (!value || typeof value !== 'object') continue
     const item = value as Record<string, unknown>
-    const liked = item.liked === true ? true : undefined
+    const liked = item.liked === true ? true : item.liked === false ? false : undefined
     const rating = normalizeSkillRating(item.rating)
-    if (liked || rating) out[key] = { ...(liked ? { liked: true } : {}), ...(rating ? { rating } : {}) }
+    if (liked == null && !rating) continue
+    out[key] = { ...(liked != null ? { liked } : {}), ...(rating ? { rating } : {}) }
   }
   return out
+}
+
+function preferLocalUnlikes(cloud: Record<string, SkillPref>, local: Record<string, SkillPref>) {
+  const next = { ...cloud }
+  for (const [id, pref] of Object.entries(local)) {
+    if (pref.liked === false) next[id] = { ...next[id], ...pref, liked: false }
+  }
+  return next
 }
 
 function asRows(raw: unknown): DayCardRow[] {
@@ -136,6 +145,9 @@ export async function pullCare(uid: string) {
     return
   }
   const data = snap.data()
+  const localPrefs = useCareStore.getState().cardPrefs
+  const cloudPrefs = data.cardPrefs != null ? asSkillPrefs(data.cardPrefs) : localPrefs
+  const cardPrefs = preferLocalUnlikes(cloudPrefs, localPrefs)
   withCloudLock(() =>
     useCareStore.getState().replaceCare({
       checkIns: asCheckIns(data.checkIns, data.anxietyHighIsWorse !== true),
@@ -150,8 +162,12 @@ export async function pullCare(uid: string) {
         avoid: String(data.crisisPlan?.avoid ?? ''),
       },
       skillPrefs: asSkillPrefs(data.skillPrefs),
+      cardPrefs,
     }),
   )
+  const shouldPushPrefs =
+    data.cardPrefs == null || JSON.stringify(cardPrefs) !== JSON.stringify(cloudPrefs)
+  if (shouldPushPrefs) await pushCare(uid)
   rememberPayload(`userCare:${uid}`, careComparable())
 }
 
@@ -167,6 +183,7 @@ function careComparable() {
     sessionNote: state.sessionNote,
     crisisPlan: state.crisisPlan,
     skillPrefs: state.skillPrefs,
+    cardPrefs: state.cardPrefs,
   }
 }
 
@@ -174,7 +191,11 @@ export async function pushCare(uid: string) {
   const db = getFirebaseDb()
   if (!db) return
   const comparable = careComparable()
-  await ifPayloadChanged(`userCare:${uid}`, comparable, () =>
-    setDoc(doc(db, 'userCare', uid), { ...comparable, updatedAt: new Date().toISOString() }, { merge: true }),
-  )
+  await ifPayloadChanged(`userCare:${uid}`, comparable, async () => {
+    const ref = doc(db, 'userCare', uid)
+    const payload = { ...comparable, updatedAt: new Date().toISOString() }
+    const snap = await getDoc(ref)
+    if (!snap.exists()) await setDoc(ref, payload)
+    else await updateDoc(ref, payload)
+  })
 }
