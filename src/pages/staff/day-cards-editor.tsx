@@ -34,6 +34,7 @@ import {
   NoticeLayer,
   PageHeader,
   SearchSelect,
+  TextArea,
   TextField,
   useNotice,
 } from '@/shared/ui'
@@ -137,7 +138,21 @@ export function StaffDayCardEditorPage() {
         ...draft.copy,
         ru: { title: draft.copy.ru.title.trim(), about: draft.copy.ru.about.trim() },
       },
-      sections: draft.sections,
+      sections: draft.sections.map((section) => ({
+        ...section,
+        fields: section.fields.map((field) =>
+          field.kind === 'choice'
+            ? {
+                ...field,
+                options: {
+                  ru: (field.options?.ru ?? []).map((item) => item.trim()).filter(Boolean),
+                  en: [],
+                  sl: [],
+                },
+              }
+            : field,
+        ),
+      })),
     }
     setBusy(true)
     try {
@@ -501,12 +516,13 @@ function SectionEditor({
           />
           {field.kind === 'choice' ? (
             <Field label={t('staff.fieldOptions')}>
-              <TextField
-                value={(field.options?.ru ?? []).join(' / ')}
+              <TextArea
+                rows={2}
+                value={(field.options?.ru ?? []).join('\n')}
                 onChange={(event) =>
                   patchField(fieldIndex, {
                     ...field,
-                    options: { ru: event.target.value.split('/').map((part) => part.trim()), en: [], sl: [] },
+                    options: { ru: event.target.value.split('\n'), en: [], sl: [] },
                   })
                 }
               />
