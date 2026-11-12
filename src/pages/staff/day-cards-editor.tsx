@@ -22,8 +22,9 @@ import {
 import { techniqueCopy, useTechniqueStore } from '@/entities/technique'
 import { isStaffRole, useUserStore } from '@/entities/user'
 import { type Locale } from '@/shared/config'
-import { cn, firestoreErrorKey } from '@/shared/lib'
+import { firestoreErrorKey } from '@/shared/lib'
 import {
+  BinaryChoice,
   Button,
   Card,
   Chip,
@@ -126,10 +127,6 @@ export function StaffDayCardEditorPage() {
     setError('')
     if (!draft.copy.ru.title.trim()) {
       setError(t('staff.needTitle'))
-      return ''
-    }
-    if (draft.active && draft.techniqueIds.length === 0) {
-      setError(t('staff.dayCardsNeedSkills'))
       return ''
     }
     const cleaned: DayCard = {
@@ -273,7 +270,7 @@ export function StaffDayCardEditorPage() {
         <h2 className="text-base font-medium">{t('staff.linkedSkills')}</h2>
         <p className="mt-1 text-sm text-muted">{t('staff.linkedSkillsHint')}</p>
         {draft.techniqueIds.length === 0 ? (
-          <p className="mt-2 text-sm text-terra">{t('staff.dayCardsBindHint')}</p>
+          <p className="mt-2 text-sm text-muted">{t('staff.dayCardsBindHint')}</p>
         ) : null}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {linked.map(({ id: skillId, technique }) => (
@@ -399,20 +396,15 @@ export function StaffDayCardEditorPage() {
       </div>
 
       <Card className="mt-4">
-        <Chip
-          size="compact"
-          active={draft.active}
-          className={cn(draft.techniqueIds.length === 0 && 'opacity-60')}
-          onClick={() => {
-            if (!draft.active && draft.techniqueIds.length === 0) {
-              setError(t('staff.dayCardsNeedSkills'))
-              return
-            }
-            setDraft((current) => ({ ...current, active: !current.active }))
-          }}
-        >
-          {t('staff.dayCardActive')}
-        </Chip>
+        <BinaryChoice
+          label={t('staff.dayCardActive')}
+          value={draft.active}
+          onChange={(active) => setDraft((current) => ({ ...current, active }))}
+          offLabel={t('staff.dayCardInactive')}
+          onLabel={t('staff.dayCardActive')}
+          stateOff={t('staff.dayCardPublishOff')}
+          stateOn={t('staff.dayCardPublishOn')}
+        />
         {error ? <p className="mt-3 text-sm text-terra">{error}</p> : null}
         <div className="mt-4">
           <Button disabled={busy} onClick={() => void persist()}>

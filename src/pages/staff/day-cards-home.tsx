@@ -115,7 +115,7 @@ export function StaffDayCardsHomePage() {
                   <p className="mt-0.5 text-sm text-muted">
                     {t(`school.${card.school}`)} · {t(`staff.cadence${card.cadence === 'daily' ? 'Daily' : 'Episode'}`)}
                     {' · '}
-                    {card.active ? t('staff.dayCardActive') : t('staff.dayCardInactive')}
+                    {card.active ? t('staff.dayCardPublished') : t('staff.dayCardInactive')}
                     {' · '}
                     {card.techniqueIds.length}
                   </p>

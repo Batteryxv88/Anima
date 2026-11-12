@@ -154,7 +154,7 @@ export function emptyDayCard(order = 0): DayCard {
 
 export function activeDayCards(cards: DayCard[]) {
   return cards
-    .filter((item) => item.active && item.techniqueIds.length > 0)
+    .filter((item) => item.active)
     .slice()
     .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id))
 }

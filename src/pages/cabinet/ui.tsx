@@ -171,13 +171,31 @@ function Notebook({ link }: { link: CareLink }) {
 function PatientList({ links }: { links: CareLink[] }) {
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
+  const [names, setNames] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const stops = links.map((link) =>
+      listenShare(link.id, (share) => {
+        const name = share?.patientName?.trim() ?? ''
+        setNames((current) => (current[link.id] === name ? current : { ...current, [link.id]: name }))
+      }),
+    )
+    return () => {
+      for (const stop of stops) stop()
+    }
+  }, [links])
+
   const list = useMemo(() => {
     const needle = query.trim().toLowerCase()
     const filtered = needle
-      ? links.filter((item) => (item.patientEmail || '').toLowerCase().includes(needle))
+      ? links.filter((item) => {
+          const name = names[item.id]?.toLowerCase() ?? ''
+          const email = item.patientEmail.toLowerCase()
+          return name.includes(needle) || email.includes(needle)
+        })
       : links
     return [...filtered].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  }, [links, query])
+  }, [links, names, query])
 
   return (
     <div className="grid gap-3">
@@ -190,15 +208,23 @@ function PatientList({ links }: { links: CareLink[] }) {
       {list.length === 0 ? (
         <EmptyState>{t('cabinet.noPatient')}</EmptyState>
       ) : (
-        list.map((item) => (
-          <Link
-            key={item.id}
-            to={`/cabinet/${item.id}`}
-            className="break-all rounded-2xl border border-line bg-card px-4 py-4 text-sm sm:px-5"
-          >
-            {item.patientEmail || t('cabinet.patient')}
-          </Link>
-        ))
+        list.map((item) => {
+          const name = names[item.id] ?? ''
+          return (
+            <Link
+              key={item.id}
+              to={`/cabinet/${item.id}`}
+              className="block rounded-2xl border border-line bg-card px-4 py-4 sm:px-5"
+            >
+              <span className="block break-words text-sm font-medium">
+                {name || item.patientEmail || t('cabinet.patient')}
+              </span>
+              {name && item.patientEmail ? (
+                <span className="mt-1 block break-all text-sm text-muted">{item.patientEmail}</span>
+              ) : null}
+            </Link>
+          )
+        })
       )}
     </div>
   )
